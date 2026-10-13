@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Login — TurboStore</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>tailwind.config={theme:{extend:{colors:{'ts-dark':'#063B2D','ts-deep':'#075E45','ts-green':'#16A34A','ts-bright':'#4ADE80','ts-light':'#DCFCE7','ts-pale':'#F0FDF4','ts-bg':'#F8FAF9','ts-text':'#0F172A','ts-muted':'#64748B'},fontFamily:{sans:['Inter','system-ui','sans-serif']}}}}</script>
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+<style>
+*{box-sizing:border-box}
+body{font-family:'Inter',system-ui,sans-serif;margin:0;min-height:100vh;display:flex}
+.input-field{width:100%;border:1.5px solid #E2E8F0;border-radius:10px;padding:11px 14px 11px 40px;font-size:14px;color:#0F172A;background:#fff;outline:none;transition:border-color .2s,box-shadow .2s;font-family:inherit}
+.input-field:focus{border-color:#16A34A;box-shadow:0 0 0 3px rgba(22,163,74,.12)}
+.input-field::placeholder{color:#94A3B8}
+.btn-submit{width:100%;background:linear-gradient(135deg,#16A34A,#15803D);color:#fff;border:none;border-radius:10px;padding:13px;font-size:15px;font-weight:600;cursor:pointer;transition:all .2s;box-shadow:0 2px 10px rgba(22,163,74,.3);font-family:inherit}
+.btn-submit:hover{background:linear-gradient(135deg,#15803D,#166534);box-shadow:0 4px 18px rgba(22,163,74,.4);transform:translateY(-1px)}
+.left-panel{background:linear-gradient(160deg,#063B2D 0%,#0A4A36 100%);display:flex;flex-direction:column;justify-content:space-between;padding:48px;position:relative;overflow:hidden}
+.left-panel::before{content:'';position:absolute;top:-30%;right:-20%;width:70%;height:80%;background:radial-gradient(ellipse,rgba(74,222,128,.12) 0%,transparent 65%);pointer-events:none}
+.left-panel::after{content:'';position:absolute;bottom:-20%;left:-10%;width:60%;height:60%;background:radial-gradient(ellipse,rgba(74,222,128,.08) 0%,transparent 60%);pointer-events:none}
+</style>
+</head>
+<body>
+  <!-- Left panel (hidden on small screens) -->
+  <div class="left-panel hidden lg:flex lg:w-5/12 xl:w-[45%]" style="flex-direction:column;justify-content:space-between">
+    <div class="relative z-10">
+      <a href="../index.htm" style="display:inline-flex;align-items:center;gap:8px;text-decoration:none;margin-bottom:64px">
+        <div style="width:36px;height:36px;background:#4ADE80;border-radius:10px;display:flex;align-items:center;justify-content:center">
+          <span style="color:#063B2D;font-weight:900;font-size:16px">T</span>
+        </div>
+        <span style="color:#fff;font-weight:700;font-size:20px;letter-spacing:-.01em">TurboStore</span>
+      </a>
+      <h1 style="color:#fff;font-size:36px;font-weight:900;line-height:1.15;margin-bottom:16px">Verify. Register.<br/>Build Without Limits.</h1>
+      <p style="color:rgba(134,239,172,.7);font-size:16px;line-height:1.7;max-width:340px">Virtual phone numbers and OTP verification for developers, businesses and digital teams worldwide.</p>
+    </div>
+    <!-- Feature list -->
+    <div class="relative z-10">
+      <div style="display:flex;flex-direction:column;gap:16px;margin-bottom:48px">
+        <div style="display:flex;align-items:center;gap:12px">
+          <div style="width:36px;height:36px;background:rgba(74,222,128,.15);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+            <i data-lucide="globe" style="width:16px;height:16px;color:#4ADE80"></i>
+          </div>
+          <div>
+            <p style="color:#fff;font-weight:600;font-size:14px;margin:0 0 2px">Global Number Coverage</p>
+            <p style="color:rgba(134,239,172,.6);font-size:12px;margin:0">Numbers from 50+ countries available</p>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px">
+          <div style="width:36px;height:36px;background:rgba(74,222,128,.15);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+            <i data-lucide="zap" style="width:16px;height:16px;color:#4ADE80"></i>
+          </div>
+          <div>
+            <p style="color:#fff;font-weight:600;font-size:14px;margin:0 0 2px">Instant OTP Delivery</p>
+            <p style="color:rgba(134,239,172,.6);font-size:12px;margin:0">Receive verification codes in seconds</p>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px">
+          <div style="width:36px;height:36px;background:rgba(74,222,128,.15);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+            <i data-lucide="code-2" style="width:16px;height:16px;color:#4ADE80"></i>
+          </div>
+          <div>
+            <p style="color:#fff;font-weight:600;font-size:14px;margin:0 0 2px">Developer API</p>
+            <p style="color:rgba(134,239,172,.6);font-size:12px;margin:0">Full REST API for seamless integration</p>
+          </div>
+        </div>
+      </div>
+      <p style="color:rgba(134,239,172,.35);font-size:12px">© 2026 TurboStore. All rights reserved.</p>
+    </div>
+  </div>
+
+  <!-- Right panel (login form) -->
+  <div class="flex-1 flex items-center justify-center px-4 py-12" style="background:#F8FAF9">
+    <!-- Mobile logo -->
+    <div class="w-full max-w-md">
+      <a href="../index.htm" class="lg:hidden" style="display:inline-flex;align-items:center;gap:8px;text-decoration:none;margin-bottom:32px">
+        <div style="width:32px;height:32px;background:linear-gradient(135deg,#16A34A,#063B2D);border-radius:8px;display:flex;align-items:center;justify-content:center">
+          <span style="color:#4ADE80;font-weight:900;font-size:13px">T</span>
+        </div>
+        <span style="font-weight:700;font-size:18px;color:#0F172A">TurboStore</span>
+      </a>
+
+      <div style="background:#fff;border-radius:20px;padding:40px;box-shadow:0 1px 4px rgba(0,0,0,.05),0 8px 32px rgba(0,0,0,.08);border:1px solid rgba(220,252,231,.6)">
+        <div style="margin-bottom:28px">
+          <h2 style="font-size:24px;font-weight:800;color:#0F172A;margin:0 0 8px">Welcome back</h2>
+          <p style="color:#64748B;font-size:14px;margin:0">Sign in to your TurboStore account</p>
+        </div>
+
+        <form id="loginForm" onsubmit="handleLogin(event)">
+          <!-- Email -->
+          <div style="margin-bottom:18px">
+            <label style="display:block;font-size:13px;font-weight:600;color:#0F172A;margin-bottom:6px">Email address</label>
+            <div style="position:relative">
+              <i data-lucide="mail" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);width:16px;height:16px;color:#94A3B8"></i>
+              <input type="email" id="email" class="input-field" placeholder="you@example.com" required autocomplete="email"/>
+            </div>
+          </div>
+
+          <!-- Password -->
+          <div style="margin-bottom:8px">
+            <label style="display:block;font-size:13px;font-weight:600;color:#0F172A;margin-bottom:6px">Password</label>
+            <div style="position:relative">
+              <i data-lucide="lock" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);width:16px;height:16px;color:#94A3B8"></i>
+              <input type="password" id="password" class="input-field" placeholder="Enter your password" required autocomplete="current-password"/>
+              <button type="button" onclick="togglePassword('password','eyeBtn')" id="eyeBtn" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);border:none;background:transparent;cursor:pointer;padding:0;display:flex;align-items:center;justify-content:center">
+                <i data-lucide="eye" style="width:16px;height:16px;color:#94A3B8"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- Remember + Forgot -->
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px">
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+              <input type="checkbox" id="remember" style="width:16px;height:16px;accent-color:#16A34A"/>
+              <span style="font-size:13px;color:#64748B">Remember me</span>
+            </label>
+            <a href="forgot-password.html" style="font-size:13px;color:#16A34A;text-decoration:none;font-weight:600" onmouseover="this.style.color='#15803D'" onmouseout="this.style.color='#16A34A'">Forgot password?</a>
+          </div>
+
+          <!-- Error message -->
+          <div id="errorMsg" style="display:none;background:#FEF2F2;border:1px solid #FECACA;border-radius:10px;padding:12px;margin-bottom:16px;font-size:13px;color:#DC2626;display:none">
+            <div style="display:flex;align-items:center;gap:8px">
+              <i data-lucide="alert-circle" style="width:16px;height:16px;flex-shrink:0"></i>
+              <span id="errorText">Invalid email or password.</span>
+            </div>
+          </div>
+
+          <button type="submit" class="btn-submit" id="submitBtn">
+            <span id="btnText">Sign In</span>
+            <span id="btnLoader" style="display:none">
+              <svg style="width:18px;height:18px;animation:spin 1s linear infinite;margin:0 auto" fill="none" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="10" stroke="rgba(255,255,255,.3)" stroke-width="3"/>
+                <path d="M12 2a10 10 0 0 1 10 10" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+              </svg>
+            </span>
+          </button>
+        </form>
+
+        <p style="text-align:center;margin-top:20px;font-size:14px;color:#64748B">
+          Don't have an account?
+          <a href="register.html" style="color:#16A34A;font-weight:600;text-decoration:none" onmouseover="this.style.color='#15803D'" onmouseout="this.style.color='#16A34A'">Create one free</a>
+        </p>
+      </div>
+    </div>
+  </div>
+
+<style>
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+<script>
+lucide.createIcons();
+
+function togglePassword(inputId, btnId){
+  const inp=document.getElementById(inputId);
+  const btn=document.getElementById(btnId);
+  if(inp.type==='password'){
+    inp.type='text';
+    btn.innerHTML='<i data-lucide="eye-off" style="width:16px;height:16px;color:#94A3B8"></i>';
+  } else {
+    inp.type='password';
+    btn.innerHTML='<i data-lucide="eye" style="width:16px;height:16px;color:#94A3B8"></i>';
+  }
+  lucide.createIcons();
+}
+
+function handleLogin(e){
+  e.preventDefault();
+  const btn=document.getElementById('submitBtn');
+  const txt=document.getElementById('btnText');
+  const loader=document.getElementById('btnLoader');
+  const err=document.getElementById('errorMsg');
+
+  txt.style.display='none';
+  loader.style.display='block';
+  btn.disabled=true;
+  err.style.display='none';
+
+  // Simulate API call — replace with real fetch to backend
+  setTimeout(()=>{
+    txt.style.display='block';
+    loader.style.display='none';
+    btn.disabled=false;
+    // Mock: redirect to dashboard
+    window.location.href='../dashboard/index.html';
+  }, 1200);
+}
+</script>
+</body>
+</html>

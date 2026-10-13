@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Create Account — TurboStore</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>tailwind.config={theme:{extend:{colors:{'ts-dark':'#063B2D','ts-deep':'#075E45','ts-green':'#16A34A','ts-bright':'#4ADE80','ts-light':'#DCFCE7','ts-pale':'#F0FDF4','ts-bg':'#F8FAF9','ts-text':'#0F172A','ts-muted':'#64748B'},fontFamily:{sans:['Inter','system-ui','sans-serif']}}}}</script>
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+<style>
+*{box-sizing:border-box}
+body{font-family:'Inter',system-ui,sans-serif;margin:0;min-height:100vh;display:flex}
+.input-field{width:100%;border:1.5px solid #E2E8F0;border-radius:10px;padding:11px 14px 11px 40px;font-size:14px;color:#0F172A;background:#fff;outline:none;transition:border-color .2s,box-shadow .2s;font-family:inherit}
+.input-field:focus{border-color:#16A34A;box-shadow:0 0 0 3px rgba(22,163,74,.12)}
+.input-field::placeholder{color:#94A3B8}
+.input-field.error{border-color:#EF4444;box-shadow:0 0 0 3px rgba(239,68,68,.1)}
+.btn-submit{width:100%;background:linear-gradient(135deg,#16A34A,#15803D);color:#fff;border:none;border-radius:10px;padding:13px;font-size:15px;font-weight:600;cursor:pointer;transition:all .2s;box-shadow:0 2px 10px rgba(22,163,74,.3);font-family:inherit}
+.btn-submit:hover{background:linear-gradient(135deg,#15803D,#166534);box-shadow:0 4px 18px rgba(22,163,74,.4);transform:translateY(-1px)}
+.btn-submit:disabled{opacity:.7;cursor:not-allowed;transform:none}
+.left-panel{background:linear-gradient(160deg,#063B2D 0%,#0A4A36 100%);display:flex;flex-direction:column;justify-content:space-between;padding:48px;position:relative;overflow:hidden}
+.left-panel::before{content:'';position:absolute;top:-30%;right:-20%;width:70%;height:80%;background:radial-gradient(ellipse,rgba(74,222,128,.12) 0%,transparent 65%);pointer-events:none}
+.strength-bar{height:4px;border-radius:999px;transition:all .3s}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+  <!-- Left panel -->
+  <div class="left-panel hidden lg:flex" style="width:42%;flex-direction:column;justify-content:space-between">
+    <div style="position:relative;z-index:1">
+      <a href="../index.htm" style="display:inline-flex;align-items:center;gap:8px;text-decoration:none;margin-bottom:56px">
+        <div style="width:36px;height:36px;background:#4ADE80;border-radius:10px;display:flex;align-items:center;justify-content:center">
+          <span style="color:#063B2D;font-weight:900;font-size:16px">T</span>
+        </div>
+        <span style="color:#fff;font-weight:700;font-size:20px">TurboStore</span>
+      </a>
+      <h1 style="color:#fff;font-size:34px;font-weight:900;line-height:1.2;margin-bottom:16px">Start Verifying<br/>in Minutes.</h1>
+      <p style="color:rgba(134,239,172,.7);font-size:15px;line-height:1.7;max-width:320px">Create your free account and get access to virtual numbers from around the world.</p>
+    </div>
+    <!-- Steps preview -->
+    <div style="position:relative;z-index:1">
+      <div style="display:flex;flex-direction:column;gap:20px;margin-bottom:40px">
+        <div style="display:flex;align-items:center;gap:12px">
+          <div style="width:28px;height:28px;background:#4ADE80;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+            <span style="color:#063B2D;font-weight:900;font-size:12px">1</span>
+          </div>
+          <p style="color:rgba(255,255,255,.85);font-size:14px;margin:0">Create your free account</p>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px">
+          <div style="width:28px;height:28px;background:rgba(74,222,128,.25);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+            <span style="color:#4ADE80;font-weight:900;font-size:12px">2</span>
+          </div>
+          <p style="color:rgba(255,255,255,.6);font-size:14px;margin:0">Fund your wallet</p>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px">
+          <div style="width:28px;height:28px;background:rgba(74,222,128,.15);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+            <span style="color:rgba(74,222,128,.7);font-weight:900;font-size:12px">3</span>
+          </div>
+          <p style="color:rgba(255,255,255,.5);font-size:14px;margin:0">Buy your first number</p>
+        </div>
+      </div>
+      <p style="color:rgba(134,239,172,.3);font-size:12px">© 2026 TurboStore. All rights reserved.</p>
+    </div>
+  </div>
+
+  <!-- Right panel -->
+  <div style="flex:1;display:flex;align-items:center;justify-content:center;padding:32px 16px;background:#F8FAF9;overflow-y:auto">
+    <div style="width:100%;max-width:460px">
+      <!-- Mobile logo -->
+      <a href="../index.htm" class="lg:hidden" style="display:inline-flex;align-items:center;gap:8px;text-decoration:none;margin-bottom:28px">
+        <div style="width:32px;height:32px;background:linear-gradient(135deg,#16A34A,#063B2D);border-radius:8px;display:flex;align-items:center;justify-content:center">
+          <span style="color:#4ADE80;font-weight:900;font-size:13px">T</span>
+        </div>
+        <span style="font-weight:700;font-size:18px;color:#0F172A">TurboStore</span>
+      </a>
+
+      <div style="background:#fff;border-radius:20px;padding:36px;box-shadow:0 1px 4px rgba(0,0,0,.05),0 8px 32px rgba(0,0,0,.08);border:1px solid rgba(220,252,231,.6)">
+        <div style="margin-bottom:24px">
+          <h2 style="font-size:22px;font-weight:800;color:#0F172A;margin:0 0 6px">Create your account</h2>
+          <p style="color:#64748B;font-size:14px;margin:0">Start verifying in minutes. No credit card required.</p>
+        </div>
+
+        <form id="registerForm" onsubmit="handleRegister(event)" novalidate>
+          <!-- Full name -->
+          <div style="margin-bottom:16px">
+            <label style="display:block;font-size:13px;font-weight:600;color:#0F172A;margin-bottom:6px">Full name</label>
+            <div style="position:relative">
+              <i data-lucide="user" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);width:16px;height:16px;color:#94A3B8"></i>
+              <input type="text" id="name" class="input-field" placeholder="John Doe" required autocomplete="name"/>
+            </div>
+            <p id="nameErr" class="field-err" style="font-size:12px;color:#EF4444;margin-top:4px;display:none"></p>
+          </div>
+
+          <!-- Email -->
+          <div style="margin-bottom:16px">
+            <label style="display:block;font-size:13px;font-weight:600;color:#0F172A;margin-bottom:6px">Email address</label>
+            <div style="position:relative">
+              <i data-lucide="mail" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);width:16px;height:16px;color:#94A3B8"></i>
+              <input type="email" id="email" class="input-field" placeholder="you@example.com" required autocomplete="email"/>
+            </div>
+            <p id="emailErr" style="font-size:12px;color:#EF4444;margin-top:4px;display:none"></p>
+          </div>
+
+          <!-- Password -->
+          <div style="margin-bottom:16px">
+            <label style="display:block;font-size:13px;font-weight:600;color:#0F172A;margin-bottom:6px">Password</label>
+            <div style="position:relative">
+              <i data-lucide="lock" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);width:16px;height:16px;color:#94A3B8"></i>
+              <input type="password" id="password" class="input-field" placeholder="Min. 8 characters" required autocomplete="new-password" oninput="updateStrength(this.value)"/>
+              <button type="button" onclick="togglePwd('password','eye1')" id="eye1" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);border:none;background:transparent;cursor:pointer;padding:0;line-height:0">
+                <i data-lucide="eye" style="width:16px;height:16px;color:#94A3B8"></i>
+              </button>
+            </div>
+            <!-- Strength indicator -->
+            <div style="margin-top:8px">
+              <div style="display:flex;gap:4px;margin-bottom:4px">
+                <div id="s1" class="strength-bar" style="flex:1;background:#E2E8F0"></div>
+                <div id="s2" class="strength-bar" style="flex:1;background:#E2E8F0"></div>
+                <div id="s3" class="strength-bar" style="flex:1;background:#E2E8F0"></div>
+                <div id="s4" class="strength-bar" style="flex:1;background:#E2E8F0"></div>
+              </div>
+              <p id="strengthLabel" style="font-size:11px;color:#94A3B8;margin:0"></p>
+            </div>
+          </div>
+
+          <!-- Confirm password -->
+          <div style="margin-bottom:20px">
+            <label style="display:block;font-size:13px;font-weight:600;color:#0F172A;margin-bottom:6px">Confirm password</label>
+            <div style="position:relative">
+              <i data-lucide="lock" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);width:16px;height:16px;color:#94A3B8"></i>
+              <input type="password" id="confirmPassword" class="input-field" placeholder="Repeat your password" required autocomplete="new-password"/>
+              <button type="button" onclick="togglePwd('confirmPassword','eye2')" id="eye2" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);border:none;background:transparent;cursor:pointer;padding:0;line-height:0">
+                <i data-lucide="eye" style="width:16px;height:16px;color:#94A3B8"></i>
+              </button>
+            </div>
+            <p id="confirmErr" style="font-size:12px;color:#EF4444;margin-top:4px;display:none"></p>
+          </div>
+
+          <!-- Terms -->
+          <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;margin-bottom:20px">
+            <input type="checkbox" id="terms" style="width:16px;height:16px;accent-color:#16A34A;flex-shrink:0;margin-top:1px"/>
+            <span style="font-size:13px;color:#64748B;line-height:1.5">I agree to the <a href="#" style="color:#16A34A;text-decoration:none;font-weight:600">Terms of Service</a> and <a href="#" style="color:#16A34A;text-decoration:none;font-weight:600">Privacy Policy</a></span>
+          </label>
+
+          <!-- Error -->
+          <div id="formError" style="display:none;background:#FEF2F2;border:1px solid #FECACA;border-radius:10px;padding:12px;margin-bottom:16px;font-size:13px;color:#DC2626">
+            <div style="display:flex;align-items:center;gap:8px">
+              <i data-lucide="alert-circle" style="width:16px;height:16px;flex-shrink:0"></i>
+              <span id="formErrorText"></span>
+            </div>
+          </div>
+
+          <button type="submit" class="btn-submit" id="submitBtn">
+            <span id="btnText">Create Account</span>
+            <span id="btnLoader" style="display:none">
+              <svg style="width:18px;height:18px;animation:spin 1s linear infinite;margin:0 auto" fill="none" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="10" stroke="rgba(255,255,255,.3)" stroke-width="3"/>
+                <path d="M12 2a10 10 0 0 1 10 10" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+              </svg>
+            </span>
+          </button>
+        </form>
+
+        <p style="text-align:center;margin-top:20px;font-size:14px;color:#64748B">
+          Already have an account?
+          <a href="login.html" style="color:#16A34A;font-weight:600;text-decoration:none">Sign in</a>
+        </p>
+      </div>
+    </div>
+  </div>
+
+<script>
+lucide.createIcons();
+
+function togglePwd(id,btnId){
+  const inp=document.getElementById(id);
+  const btn=document.getElementById(btnId);
+  if(inp.type==='password'){
+    inp.type='text';
+    btn.innerHTML='<i data-lucide="eye-off" style="width:16px;height:16px;color:#94A3B8"></i>';
+  }else{
+    inp.type='password';
+    btn.innerHTML='<i data-lucide="eye" style="width:16px;height:16px;color:#94A3B8"></i>';
+  }
+  lucide.createIcons();
+}
+
+function updateStrength(val){
+  const bars=[document.getElementById('s1'),document.getElementById('s2'),document.getElementById('s3'),document.getElementById('s4')];
+  const label=document.getElementById('strengthLabel');
+  let score=0;
+  if(val.length>=8)score++;
+  if(/[A-Z]/.test(val))score++;
+  if(/[0-9]/.test(val))score++;
+  if(/[^A-Za-z0-9]/.test(val))score++;
+
+  const colors=['#EF4444','#F97316','#EAB308','#16A34A'];
+  const labels=['Weak','Fair','Good','Strong'];
+  bars.forEach((b,i)=>{
+    b.style.background=i<score?colors[score-1]:'#E2E8F0';
+  });
+  label.textContent=val.length>0?(labels[score-1]||''):'';
+  label.style.color=score>0?colors[score-1]:'#94A3B8';
+}
+
+function showError(id,msg){
+  const el=document.getElementById(id);
+  el.textContent=msg;
+  el.style.display='block';
+}
+function clearError(id){
+  document.getElementById(id).style.display='none';
+}
+
+function handleRegister(e){
+  e.preventDefault();
+  let valid=true;
+  clearError('nameErr');clearError('emailErr');clearError('confirmErr');
+  document.getElementById('formError').style.display='none';
+
+  const name=document.getElementById('name').value.trim();
+  const email=document.getElementById('email').value.trim();
+  const pwd=document.getElementById('password').value;
+  const confirm=document.getElementById('confirmPassword').value;
+  const terms=document.getElementById('terms').checked;
+
+  if(name.length<2){showError('nameErr','Please enter your full name.');valid=false;}
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){showError('emailErr','Please enter a valid email address.');valid=false;}
+  if(pwd.length<8){showError('confirmErr','Password must be at least 8 characters.');valid=false;}
+  else if(pwd!==confirm){showError('confirmErr','Passwords do not match.');valid=false;}
+  if(!terms){
+    document.getElementById('formErrorText').textContent='Please accept the Terms of Service to continue.';
+    document.getElementById('formError').style.display='block';
+    lucide.createIcons();
+    valid=false;
+  }
+  if(!valid)return;
+
+  const btn=document.getElementById('submitBtn');
+  const txt=document.getElementById('btnText');
+  const loader=document.getElementById('btnLoader');
+  txt.style.display='none';
+  loader.style.display='block';
+  btn.disabled=true;
+
+  // Simulate API call — replace with real backend fetch
+  setTimeout(()=>{
+    window.location.href='../dashboard/index.html';
+  },1400);
+}
+</script>
+</body>
+</html>
