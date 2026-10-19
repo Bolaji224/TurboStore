@@ -8,6 +8,16 @@ if [ -z "$APP_URL" ] && [ -n "$RENDER_EXTERNAL_URL" ]; then
     export APP_URL="$RENDER_EXTERNAL_URL"
 fi
 
+# Render secret files are readable only by root, but PHP runs as www-data: copy the DB CA cert to a readable path
+if [ -n "$MYSQL_ATTR_SSL_CA" ]; then
+    if [ -r "$MYSQL_ATTR_SSL_CA" ]; then
+        install -m 0644 "$MYSQL_ATTR_SSL_CA" /usr/local/share/db-ca.pem
+        export MYSQL_ATTR_SSL_CA=/usr/local/share/db-ca.pem
+    else
+        echo "WARNING: MYSQL_ATTR_SSL_CA=$MYSQL_ATTR_SSL_CA does not exist; check the Secret File name in Render" >&2
+    fi
+fi
+
 # Config is not cached: controllers read env() directly, which returns null once config is cached
 php artisan route:cache
 php artisan view:cache
