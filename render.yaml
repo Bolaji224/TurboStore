@@ -1,0 +1,90 @@
+# Render Blueprint: Laravel API (Docker) + React static site, both on the free plan.
+# Values marked `sync: false` are entered in the Render dashboard and never stored in Git.
+services:
+  - type: web
+    name: turbostore-api
+    runtime: docker
+    plan: free
+    rootDir: backend
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /up
+    autoDeploy: true
+    envVars:
+      - key: APP_NAME
+        value: TurboStore
+      - key: APP_ENV
+        value: production
+      - key: APP_DEBUG
+        value: "false"
+      - key: APP_KEY
+        sync: false            # base64:... value from `php artisan key:generate --show`
+      - key: FRONTEND_URL
+        sync: false            # e.g. https://turbostore-web.onrender.com (no trailing slash)
+      - key: LOG_CHANNEL
+        value: stderr
+      - key: LOG_LEVEL
+        value: warning
+      - key: DB_CONNECTION
+        sync: false            # mysql or pgsql, matching the hosted database
+      - key: DB_URL
+        sync: false            # full connection URL from the database provider
+      - key: SESSION_DRIVER
+        value: database
+      - key: CACHE_STORE
+        value: database
+      - key: QUEUE_CONNECTION
+        value: database
+      - key: FILESYSTEM_DISK
+        value: local
+      - key: RUN_MIGRATIONS
+        value: "true"
+      - key: JWT_SECRET
+        generateValue: true
+      - key: MAIL_MAILER
+        value: smtp
+      - key: MAIL_HOST
+        sync: false
+      - key: MAIL_PORT
+        value: "2525"          # free Render instances block outbound SMTP on 25/465/587
+      - key: MAIL_USERNAME
+        sync: false
+      - key: MAIL_PASSWORD
+        sync: false
+      - key: MAIL_FROM_ADDRESS
+        sync: false
+      - key: MAIL_FROM_NAME
+        value: TurboStore
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: SMS_DEFAULT_PROVIDER
+        value: fivesim
+      # All three provider keys must be set (use any placeholder for unused providers),
+      # otherwise provider-backed endpoints return 500
+      - key: FIVESIM_API_KEY
+        sync: false
+      - key: SMSPOOL_API_KEY
+        sync: false
+      - key: GRIZZLY_API_KEY
+        sync: false
+
+  - type: web
+    name: turbostore-web
+    runtime: static
+    rootDir: frontend
+    buildCommand: npm ci && npm run build
+    staticPublishPath: dist
+    autoDeploy: true
+    envVars:
+      - key: VITE_API_URL
+        sync: false            # the API's public URL, e.g. https://turbostore-api.onrender.com
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    headers:
+      - path: /assets/*
+        name: Cache-Control
+        value: public, max-age=31536000, immutable
