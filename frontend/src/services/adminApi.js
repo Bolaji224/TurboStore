@@ -1,7 +1,8 @@
 import axios from 'axios'
+import { API_URL } from './api'
 
 const adminApi = axios.create({
-  baseURL: 'http://localhost:8000/api/admin',
+  baseURL: `${API_URL}/api/admin`,
   headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
 })
 

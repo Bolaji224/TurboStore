@@ -4,7 +4,7 @@ import { Eye, EyeOff, Mail, Lock, Fingerprint } from 'lucide-react'
 import { startAuthentication } from '@simplewebauthn/browser'
 import { useAuth } from '../../context/AuthContext'
 import AuthLayout from '../../components/layout/AuthLayout'
-import api from '../../services/api'
+import api, { API_URL } from '../../services/api'
 
 function GoogleIcon() {
   return (
@@ -79,7 +79,7 @@ export default function Login() {
 
       {/* Google button */}
       <a
-        href="http://localhost:8000/auth/google/redirect"
+        href={`${API_URL}/auth/google/redirect`}
         style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, padding: '12px 20px', background: 'var(--section-alt)', border: '1.5px solid var(--border)', borderRadius: 10, cursor: 'pointer', fontFamily: 'inherit', fontSize: 14, fontWeight: 600, color: 'var(--text)', marginBottom: 12, textDecoration: 'none', transition: 'border-color .2s', boxSizing: 'border-box' }}
       >
         <GoogleIcon />
