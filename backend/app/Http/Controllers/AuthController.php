@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Models\Vendor;
 use App\Services\ReferralService;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Auth\Events\Verified;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
@@ -44,6 +46,54 @@ class AuthController extends Controller
         return response()->json([
             'message' => 'Registration successful.',
             'user'    => $this->formatUser($user),
+            'token'   => $token,
+        ], 201);
+    }
+
+    public function vendorRegister(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'name'          => 'required|string|max:255',
+            'email'         => 'required|string|email|max:255|unique:users',
+            'password'      => 'required|string|min:8|confirmed',
+            'business_name' => 'required|string|max:255',
+            'bio'           => 'nullable|string|max:1000',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        [$user, $vendor] = DB::transaction(function () use ($request) {
+            $user = User::create([
+                'name'          => $request->name,
+                'email'         => $request->email,
+                'password'      => $request->password,
+                'referral_code' => strtoupper(Str::random(8)),
+            ]);
+
+            $vendor = Vendor::create([
+                'user_id'         => $user->id,
+                'business_name'   => $request->business_name,
+                'bio'             => $request->bio ?? '',
+                'status'          => 'approved',
+                'approved_at'     => now(),
+                'commission_rate' => 10,
+            ]);
+
+            return [$user, $vendor];
+        });
+
+        $token = JWTAuth::fromUser($user);
+
+        return response()->json([
+            'message' => 'Supplier account created. You can start listing services now.',
+            'user'    => $this->formatUser($user),
+            'vendor'  => [
+                'id'            => $vendor->id,
+                'business_name' => $vendor->business_name,
+                'status'        => $vendor->status,
+            ],
             'token'   => $token,
         ], 201);
     }

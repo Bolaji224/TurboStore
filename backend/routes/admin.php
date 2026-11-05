@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\AdminAuthController;
 use App\Http\Controllers\Admin\AdminDashboardController;
+use App\Http\Controllers\Admin\AdminMarketplaceController;
 use App\Http\Controllers\Admin\AdminOrderController;
 use App\Http\Controllers\Admin\AdminReferralController;
 use App\Http\Controllers\Admin\AdminReportsController;
@@ -55,4 +56,28 @@ Route::middleware(['auth:api', 'admin'])->group(function () {
     Route::get('settings',           [AdminSettingsController::class, 'index']);
     Route::post('settings',          [AdminSettingsController::class, 'update']);
     Route::delete('settings/{key}',  [AdminSettingsController::class, 'destroy']);
+
+    // ── Admin marketplace routes ──────────────────────────────────────────────
+    Route::prefix('marketplace')->group(function () {
+        Route::get('stats',                        [AdminMarketplaceController::class, 'stats']);
+        Route::get('vendors',                      [AdminMarketplaceController::class, 'vendors']);
+        Route::post('vendors/{id}/approve',        [AdminMarketplaceController::class, 'approveVendor']);
+        Route::post('vendors/{id}/suspend',        [AdminMarketplaceController::class, 'suspendVendor']);
+        Route::post('vendors/{id}/reject',         [AdminMarketplaceController::class, 'rejectVendor']);
+        Route::get('services',                     [AdminMarketplaceController::class, 'services']);
+        Route::post('services/{id}/approve',       [AdminMarketplaceController::class, 'approveService']);
+        Route::post('services/{id}/reject',        [AdminMarketplaceController::class, 'rejectService']);
+        Route::post('services/{id}/suspend',       [AdminMarketplaceController::class, 'suspendService']);
+        Route::get('orders',                       [AdminMarketplaceController::class, 'orders']);
+        Route::get('disputes',                     [AdminMarketplaceController::class, 'disputes']);
+        Route::post('disputes/{id}/resolve',       [AdminMarketplaceController::class, 'resolveDispute']);
+        Route::get('payouts',                          [AdminMarketplaceController::class, 'payouts']);
+        Route::post('payouts/{id}/approve',            [AdminMarketplaceController::class, 'approvePayout']);
+        Route::post('payouts/{id}/mark-processing',    [AdminMarketplaceController::class, 'markPayoutProcessing']);
+        Route::post('payouts/{id}/mark-paid',          [AdminMarketplaceController::class, 'markPayoutPaid']);
+        Route::post('payouts/{id}/mark-failed',        [AdminMarketplaceController::class, 'markPayoutFailed']);
+        Route::post('payouts/{id}/reject',             [AdminMarketplaceController::class, 'rejectPayout']);
+        Route::get('supplier-reports',                 [AdminMarketplaceController::class, 'supplierReports']);
+        Route::get('ledger',                           [AdminMarketplaceController::class, 'ledger']);
+    });
 });

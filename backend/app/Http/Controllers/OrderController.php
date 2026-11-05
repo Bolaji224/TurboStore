@@ -43,7 +43,6 @@ class OrderController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'provider'         => 'required|string',
             'country'          => 'required|string',
             'service'          => 'required|string',
             'service_name'     => 'required|string|max:100',
@@ -58,7 +57,6 @@ class OrderController extends Controller
                 $order = $this->orderService->placeRewardOrder(
                     user:           $user,
                     rewardId:       (int) $request->input('reward_id'),
-                    provider:       $request->input('provider'),
                     country:        $request->input('country'),
                     service:        $request->input('service'),
                     serviceName:    $request->input('service_name'),
@@ -67,7 +65,6 @@ class OrderController extends Controller
             } else {
                 $order = $this->orderService->placeOrder(
                     user:           $user,
-                    provider:       $request->input('provider'),
                     country:        $request->input('country'),
                     service:        $request->input('service'),
                     serviceName:    $request->input('service_name'),

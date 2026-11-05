@@ -83,6 +83,16 @@ class User extends Authenticatable implements JWTSubject
         return $this->hasMany(\App\Models\ReferralRelationship::class, 'referrer_id');
     }
 
+    public function vendor(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(\App\Models\Vendor::class);
+    }
+
+    public function marketplaceOrders(): HasMany
+    {
+        return $this->hasMany(\App\Models\MarketplaceOrder::class, 'user_id');
+    }
+
     /** Wallet balance in NGN (float). */
     public function walletBalanceNaira(): float
     {

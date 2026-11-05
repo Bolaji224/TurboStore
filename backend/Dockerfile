@@ -21,7 +21,7 @@ RUN sed -ri \
 
 WORKDIR /var/www/html
 
-COPY . .git 
+COPY . .
 
 RUN composer install \
     --no-dev \

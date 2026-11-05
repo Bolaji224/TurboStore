@@ -28,11 +28,12 @@ class CheckOrderStatusJob implements ShouldQueue
             return;
         }
 
-        // Auto-expire overdue orders
+        // Auto-expire overdue orders — cancel() handles the refund; set expired status after
         if ($order->expires_at && $order->expires_at->isPast()) {
             Log::info('[CheckOrderStatusJob] Order expired', ['reference' => $order->reference]);
-            $order->update(['status' => 'expired']);
-            $orderService->cancel($order->fresh());
+            $orderService->cancel($order);
+            // Override the 'refunded' status with 'expired' so history is accurate
+            $order->fresh()->update(['status' => 'expired']);
             return;
         }
 

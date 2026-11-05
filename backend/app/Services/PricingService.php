@@ -14,14 +14,17 @@ class PricingService
             return 0;
         }
 
-        $rate    = (float) config('sms.pricing.usd_ngn_rate', 1600);
-        $markup  = (float) config('sms.pricing.markup_pct', 50) / 100;
-        $roundTo = (int)   config('sms.pricing.round_to', 50);
+        $rate      = (float) config('sms.pricing.usd_ngn_rate', 1600);
+        $markup    = (float) config('sms.pricing.markup_pct', 30) / 100;
+        $minProfit = (int)   config('sms.pricing.min_profit_naira', 500);
+        $roundTo   = (int)   config('sms.pricing.round_to', 100);
 
         $naira      = $providerCostUsd * $rate;
-        $withMarkup = $naira * (1 + $markup);
+        $pctProfit  = $naira * $markup;
+        $profit     = max($pctProfit, $minProfit); // always earn at least ₦500
+        $withMarkup = $naira + $profit;
 
-        // Round UP to nearest $roundTo naira for clean display (e.g. ₦150, ₦200)
+        // Round UP to nearest $roundTo naira for clean display (e.g. ₦600, ₦700)
         if ($roundTo > 0) {
             $withMarkup = ceil($withMarkup / $roundTo) * $roundTo;
         }
