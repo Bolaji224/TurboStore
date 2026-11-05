@@ -45,12 +45,31 @@ export default function Orders() {
   const [loading, setLoading] = useState(true)
   const [copied, setCopied]   = useState(null)
 
-  const fetchOrders = useCallback(async () => {
-    setLoading(true)
+  const fetchOrders = useCallback(async (silent = false) => {
+    if (!silent) setLoading(true)
     try {
       const params = filter !== 'all' ? { status: filter } : {}
       const res    = await api.get('/orders', { params })
-      setOrders(res.data.orders || [])
+      let list     = res.data.orders || []
+
+      // For orders still waiting for OTP (including otp_received without a code yet),
+      // hit the dedicated endpoint which calls syncStatus() → queries the provider in real time
+      const waiting = list.filter(o => ['waiting_for_otp', 'otp_received'].includes(o.status) && !o.otp)
+      if (waiting.length) {
+        const results = await Promise.allSettled(
+          waiting.map(o => api.get(`/orders/${o.id}/otp`))
+        )
+        results.forEach((r, i) => {
+          if (r.status === 'fulfilled') {
+            const { status, otp } = r.value.data
+            list = list.map(o =>
+              o.id === waiting[i].id ? { ...o, status, otp } : o
+            )
+          }
+        })
+      }
+
+      setOrders(list)
     } catch {
       setOrders([])
     } finally {
@@ -64,7 +83,7 @@ export default function Orders() {
   useEffect(() => {
     const hasActive = orders.some(o => ['waiting_for_otp', 'otp_received', 'processing'].includes(o.status))
     if (!hasActive) return
-    const id = setInterval(fetchOrders, 10000)
+    const id = setInterval(() => fetchOrders(true), 10000)
     return () => clearInterval(id)
   }, [orders, fetchOrders])
 
@@ -166,7 +185,7 @@ export default function Orders() {
                           </div>
                         ) : (
                           <span style={{ color: 'var(--text-muted)', fontSize: 13 }}>
-                            {isActive ? <span style={{ color: '#F59E0B' }}>Waiting…</span> : '—'}
+                            {(isActive || order.status === 'otp_received') ? <span style={{ color: '#F59E0B' }}>Waiting…</span> : '—'}
                           </span>
                         )}
                         {isActive && order.expires_at && <ExpiryCountdown expiresAt={order.expires_at} />}

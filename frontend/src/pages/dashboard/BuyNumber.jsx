@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect, useCallback } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Search, ShoppingCart, Check, X, ArrowRight, RefreshCw } from 'lucide-react'
 import { useColors } from '../../context/ThemeContext'
 import { useAuth } from '../../context/AuthContext'
@@ -50,12 +51,15 @@ function ServiceAvatar({ code, name, color }) {
   )
 }
 
-function ConfirmModal({ service, country, onConfirm, onCancel, colors, walletBalance }) {
+function ConfirmModal({ service, country, livePrice, loadingPrice, onConfirm, onCancel, colors, walletBalance }) {
   const [ordering, setOrdering] = useState(false)
   const [error, setError]       = useState('')
 
-  const priceNaira = Math.round(service.customer_price / 100)
+  // Use live price from availability check; fall back to catalogue price while loading
+  const priceKobo  = livePrice ?? service.customer_price
+  const priceNaira = Math.round(priceKobo / 100)
   const hasBalance = walletBalance >= priceNaira
+  const unavailable = !loadingPrice && livePrice === null
 
   async function handleBuy() {
     setError('')
@@ -63,7 +67,7 @@ function ConfirmModal({ service, country, onConfirm, onCancel, colors, walletBal
     try {
       await onConfirm()
     } catch (e) {
-      setError(e.message || 'Purchase failed. Please try again.')
+      setError(e.response?.data?.message || e.message || 'Purchase failed. Please try again.')
       setOrdering(false)
     }
   }
@@ -86,25 +90,39 @@ function ConfirmModal({ service, country, onConfirm, onCancel, colors, walletBal
               <p style={{ fontSize: 13, color: colors.textMuted, margin: 0 }}>{country.name}</p>
             </div>
           </div>
-          <div style={{ borderTop: `1px solid ${colors.border}`, paddingTop: 12, display: 'flex', justifyContent: 'space-between' }}>
-            <span style={{ fontSize: 13, color: colors.textMuted }}>Total</span>
-            <span style={{ fontSize: 20, fontWeight: 900, color: '#16A34A' }}>₦{priceNaira.toLocaleString()}</span>
+          <div style={{ borderTop: `1px solid ${colors.border}`, paddingTop: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ fontSize: 13, color: colors.textMuted }}>Best available price</span>
+            {loadingPrice
+              ? <span style={{ fontSize: 13, color: colors.textMuted }}>Checking…</span>
+              : unavailable
+                ? <span style={{ fontSize: 13, color: '#EF4444', fontWeight: 600 }}>Out of stock</span>
+                : <span style={{ fontSize: 20, fontWeight: 900, color: '#16A34A' }}>₦{priceNaira.toLocaleString()}</span>
+            }
           </div>
         </div>
 
-        {!hasBalance && (
+        {!loadingPrice && !unavailable && !hasBalance && (
           <div style={{ background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: 8, padding: '10px 14px', marginBottom: 16 }}>
-            <p style={{ color: '#DC2626', fontSize: 13, margin: 0 }}>Insufficient wallet balance. Current balance: ₦{walletBalance.toLocaleString()}</p>
+            <p style={{ color: '#DC2626', fontSize: 13, margin: 0 }}>Insufficient balance. Current balance: ₦{walletBalance.toLocaleString()}</p>
           </div>
         )}
 
-        <p style={{ fontSize: 12, color: colors.textMuted, margin: '0 0 20px', lineHeight: 1.6 }}>
-          ₦{priceNaira.toLocaleString()} will be deducted from your wallet. A virtual number will be assigned instantly.
-        </p>
+        {unavailable && (
+          <div style={{ background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: 8, padding: '10px 14px', marginBottom: 16 }}>
+            <p style={{ color: '#DC2626', fontSize: 13, margin: 0 }}>No numbers available right now. Try a different country.</p>
+          </div>
+        )}
+
+        {!unavailable && !loadingPrice && (
+          <p style={{ fontSize: 12, color: colors.textMuted, margin: '0 0 20px', lineHeight: 1.6 }}>
+            ₦{priceNaira.toLocaleString()} will be deducted from your wallet. A number is assigned instantly.
+          </p>
+        )}
+
         <div style={{ display: 'flex', gap: 10 }}>
           <button onClick={onCancel} className="btn-secondary" style={{ flex: 1, justifyContent: 'center' }}>Cancel</button>
-          <button onClick={handleBuy} disabled={ordering || !hasBalance} className="btn-primary" style={{ flex: 1, justifyContent: 'center' }}>
-            {ordering ? 'Processing…' : 'Buy Now'}
+          <button onClick={handleBuy} disabled={ordering || loadingPrice || unavailable || !hasBalance} className="btn-primary" style={{ flex: 1, justifyContent: 'center' }}>
+            {ordering ? 'Processing…' : loadingPrice ? 'Checking…' : 'Buy Now'}
           </button>
         </div>
       </div>
@@ -143,8 +161,8 @@ function SuccessScreen({ order, onReset, colors }) {
 export default function BuyNumber() {
   const colors        = useColors()
   const { user }      = useAuth()
+  const navigate      = useNavigate()
 
-  const [provider, setProvider]         = useState('fivesim')
   const [countries, setCountries]       = useState([])
   const [country, setCountry]           = useState(null)
   const [services, setServices]         = useState([])
@@ -155,6 +173,8 @@ export default function BuyNumber() {
   const [showCountry, setShowCountry]   = useState(false)
   const [selected, setSelected]         = useState(null)
   const [confirm, setConfirm]           = useState(false)
+  const [livePrice, setLivePrice]       = useState(null)
+  const [loadingPrice, setLoadingPrice] = useState(false)
   const [successOrder, setSuccessOrder] = useState(null)
   const [walletBalance, setWalletBalance] = useState(0)
 
@@ -163,13 +183,10 @@ export default function BuyNumber() {
     api.get('/wallet').then(r => setWalletBalance(r.data.balance_naira || 0)).catch(() => {})
   }, [])
 
-  // Fetch countries when provider changes
+  // Fetch countries on mount
   useEffect(() => {
     setLoadingC(true)
-    setCountries([])
-    setCountry(null)
-    setServices([])
-    api.get('/numbers/countries', { params: { provider } })
+    api.get('/numbers/countries')
       .then(r => {
         const list = r.data.countries || []
         setCountries(list)
@@ -177,14 +194,14 @@ export default function BuyNumber() {
       })
       .catch(() => {})
       .finally(() => setLoadingC(false))
-  }, [provider])
+  }, [])
 
   // Fetch services when country changes
   useEffect(() => {
     if (!country) return
     setLoadingS(true)
     setServices([])
-    api.get('/numbers/services', { params: { provider, country: country.code } })
+    api.get('/numbers/services', { params: { country: country.code } })
       .then(r => {
         const raw = r.data.services || []
         const enriched = raw.map(s => {
@@ -195,7 +212,7 @@ export default function BuyNumber() {
       })
       .catch(() => {})
       .finally(() => setLoadingS(false))
-  }, [country, provider])
+  }, [country])
 
   const filtered = useMemo(() => {
     const results = services.filter(s => {
@@ -213,20 +230,35 @@ export default function BuyNumber() {
     })
   }, [services, search, category])
 
+  // When a service is selected, fetch the live best price across all providers
+  const handleSelect = useCallback(async (service) => {
+    setSelected(service)
+    setLivePrice(null)
+    setConfirm(true)
+    setLoadingPrice(true)
+    try {
+      const r = await api.get('/numbers/availability', {
+        params: { country: country.code, service: service.code }
+      })
+      setLivePrice(r.data.available ? r.data.customer_price : null)
+    } catch {
+      setLivePrice(null)
+    } finally {
+      setLoadingPrice(false)
+    }
+  }, [country])
+
   const handleConfirm = useCallback(async () => {
     const idempotencyKey = crypto.randomUUID()
     const res = await api.post('/orders', {
-      provider,
       country:         country.code,
       service:         selected.code,
       service_name:    selected.name,
       idempotency_key: idempotencyKey,
     })
     setConfirm(false)
-    setSuccessOrder(res.data.order)
-    // Refresh wallet balance
-    api.get('/wallet').then(r => setWalletBalance(r.data.balance_naira || 0)).catch(() => {})
-  }, [provider, country, selected])
+    navigate('/dashboard/orders')
+  }, [country, selected])
 
   if (successOrder) {
     return <SuccessScreen order={successOrder} onReset={() => { setSuccessOrder(null); setSelected(null) }} colors={colors} />
@@ -238,8 +270,10 @@ export default function BuyNumber() {
         <ConfirmModal
           service={selected}
           country={country}
+          livePrice={livePrice}
+          loadingPrice={loadingPrice}
           onConfirm={handleConfirm}
-          onCancel={() => setConfirm(false)}
+          onCancel={() => { setConfirm(false); setSelected(null) }}
           colors={colors}
           walletBalance={walletBalance}
         />
@@ -305,7 +339,7 @@ export default function BuyNumber() {
           {filtered.slice(0, search ? filtered.length : 12).map(service => (
             <div key={service.code}
               style={{ background: colors.cardBg, border: `1px solid ${selected?.code === service.code ? service.color + '66' : colors.border}`, borderRadius: 14, padding: '14px 18px', display: 'flex', alignItems: 'center', gap: 14, transition: 'all .18s', cursor: service.qty > 0 ? 'pointer' : 'default', opacity: service.qty > 0 ? 1 : 0.5 }}
-              onClick={() => service.qty > 0 && setSelected(service)}
+              onClick={() => service.qty > 0 && handleSelect(service)}
             >
               <ServiceAvatar code={service.code} name={service.name} color={service.color} />
               <div style={{ flex: 1, minWidth: 0 }}>
@@ -319,7 +353,7 @@ export default function BuyNumber() {
                   ₦{Math.round(service.customer_price / 100).toLocaleString()}
                 </span>
                 {service.qty > 0 && (
-                  <button onClick={e => { e.stopPropagation(); setSelected(service); setConfirm(true) }}
+                  <button onClick={e => { e.stopPropagation(); handleSelect(service) }}
                     style={{ background: 'linear-gradient(135deg,#16A34A,#15803D)', color: '#fff', border: 'none', borderRadius: 8, padding: '6px 16px', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', gap: 5, whiteSpace: 'nowrap' }}>
                     <ShoppingCart size={12} /> Get number
                   </button>

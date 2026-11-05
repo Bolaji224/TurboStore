@@ -2,8 +2,8 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom'
 import {
   LayoutDashboard, PhoneCall, ClipboardList, Wallet,
-  Receipt, Key, BookOpen, User, Settings, LogOut, Menu, X, Bell,
-  Sun, Moon, Users, Gift, Shield, ChevronDown, HelpCircle
+  Receipt, Key, User, Settings, LogOut, Menu, X, Bell,
+  Sun, Moon, Users, Gift, Shield, ChevronDown, HelpCircle, ShoppingBag
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { useTheme } from '../../context/ThemeContext'
@@ -31,9 +31,11 @@ const navItems = [
     { to: '/dashboard/referrals', label: 'Referrals', icon: Users },
     { to: '/dashboard/rewards',   label: 'Rewards',   icon: Gift },
   ]},
+  { section: 'Marketplace', items: [
+    { to: '/dashboard/marketplace', label: 'Social Media Services', icon: ShoppingBag },
+  ]},
   { section: 'Developer', items: [
-    { to: '/dashboard/api-keys', label: 'API Keys',      icon: Key },
-    { to: '#',                   label: 'Documentation', icon: BookOpen },
+    { to: '/dashboard/api-keys', label: 'API Keys', icon: Key },
   ]},
   { section: 'Account', items: [
     { to: '/dashboard/profile',  label: 'Profile',  icon: User },
@@ -74,6 +76,7 @@ export default function DashboardLayout() {
   const [showUser, setShowUser]     = useState(false)
   const [notifications, setNotifications] = useState([])
   const [unreadCount, setUnreadCount]     = useState(0)
+  const [walletBalance, setWalletBalance] = useState(null)
   const { user, logout }        = useAuth()
   const { isDark, toggle }      = useTheme()
   const navigate                = useNavigate()
@@ -97,6 +100,11 @@ export default function DashboardLayout() {
     const id = setInterval(fetchNotifications, 30000)
     return () => clearInterval(id)
   }, [fetchNotifications])
+
+  // Refresh wallet balance on every page navigation so it's always current
+  useEffect(() => {
+    api.get('/wallet').then(r => setWalletBalance(r.data.balance_naira)).catch(() => {})
+  }, [location.pathname])
 
   function openNotifs() {
     setShowNotifs(v => !v)
@@ -199,7 +207,7 @@ export default function DashboardLayout() {
               <button onClick={() => navigate('/dashboard/wallet')}
                 style={{ display: 'flex', alignItems: 'center', gap: 6, background: isDark ? 'rgba(22,163,74,0.15)' : '#F0FDF4', border: `1px solid ${isDark ? 'rgba(22,163,74,0.3)' : '#DCFCE7'}`, borderRadius: 8, padding: '6px 12px', cursor: 'pointer', fontFamily: 'inherit' }}>
                 <Wallet size={13} color="#16A34A" />
-                <span style={{ fontSize: 13, fontWeight: 700, color: '#16A34A' }}>₦{Math.round(user?.wallet_naira ?? 0).toLocaleString()}</span>
+                <span style={{ fontSize: 13, fontWeight: 700, color: '#16A34A' }}>₦{Math.round(walletBalance ?? user?.wallet_naira ?? 0).toLocaleString()}</span>
               </button>
             )}
 
