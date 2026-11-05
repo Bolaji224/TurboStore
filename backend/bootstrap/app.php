@@ -18,9 +18,18 @@ return Application::configure(basePath: dirname(__DIR__))
         },
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // Render terminates TLS at its proxy; trust it so URLs (incl. signed ones) use https
+        $middleware->trustProxies(at: '*');
+
         $middleware->alias([
-            'admin' => \App\Http\Middleware\EnsureAdmin::class,
+            'admin'             => \App\Http\Middleware\EnsureAdmin::class,
+            'vendor.approved'   => \App\Http\Middleware\EnsureVendorApproved::class,
+            'vendor.has'        => \App\Http\Middleware\EnsureHasVendor::class,
+            'not.suspended'     => \App\Http\Middleware\EnsureNotSuspended::class,
         ]);
+
+        // Append suspension check after every auth:api resolution
+        $middleware->appendToGroup('api', \App\Http\Middleware\EnsureNotSuspended::class);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

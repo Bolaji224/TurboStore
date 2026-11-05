@@ -4,13 +4,20 @@ return [
 
     'default' => env('SMS_DEFAULT_PROVIDER', 'fivesim'),
 
+    // Priority order for provider fallback at buy time.
+    // First provider is tried first; on failure the next is tried automatically.
+    // Add a third slug here when the third provider is integrated.
+    'provider_priority' => ['fivesim', 'smspool'],
+
     'pricing' => [
         // Exchange rate used to convert provider USD costs → NGN
-        'usd_ngn_rate' => (float) env('USD_NGN_RATE', 1600),
-        // Percentage markup over provider cost (50 = 50%)
-        'markup_pct'   => (float) env('PRICE_MARKUP_PCT', 50),
+        'usd_ngn_rate'    => (float) env('USD_NGN_RATE', 1600),
+        // Percentage markup over provider cost (30 = 30%)
+        'markup_pct'      => (float) env('PRICE_MARKUP_PCT', 30),
+        // Minimum flat profit in naira — whichever is higher (% or flat) wins
+        'min_profit_naira'=> (int)   env('PRICE_MIN_PROFIT', 500),
         // Round customer price up to nearest N naira for clean display
-        'round_to'     => (int) env('PRICE_ROUND_NAIRA', 50),
+        'round_to'        => (int)   env('PRICE_ROUND_NAIRA', 100),
     ],
 
     'providers' => [

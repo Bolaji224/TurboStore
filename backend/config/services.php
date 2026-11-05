@@ -41,4 +41,9 @@ return [
         'redirect'      => env('APP_URL', 'http://localhost:8000') . '/auth/google/callback',
     ],
 
+    'paystack' => [
+        'secret_key' => env('PAYSTACK_SECRET_KEY'),
+        'public_key' => env('PAYSTACK_PUBLIC_KEY'),
+    ],
+
 ];

@@ -87,30 +87,17 @@ class FiveSimProvider implements SmsProviderInterface
 
     public function getAvailability(string $country, string $service): AvailabilityData
     {
-        // Use the prices endpoint for a targeted lookup
+        // Response shape: { service_code: { Category, Qty, Price }, ... }
         try {
-            $res = $this->get('/guest/prices', [
-                'country' => $country,
-                'product' => $service,
-            ]);
+            $res   = $this->get("/guest/products/{$country}/any");
+            $entry = $res[$service] ?? null;
 
-            // Response shape: { country: { operator: { service: { Qty, Price } } } }
-            $entry = null;
-            foreach ($res as $c => $operators) {
-                foreach ($operators as $op => $services) {
-                    if (isset($services[$service])) {
-                        $entry = $services[$service];
-                        break 2;
-                    }
-                }
-            }
-
-            if (!$entry) {
+            if (!$entry || ($entry['Qty'] ?? 0) == 0) {
                 return new AvailabilityData($country, $service, 0, 0, 0, false);
             }
 
-            $qty   = (int) ($entry['Qty'] ?? 0);
-            $price = (float) ($entry['Price'] ?? 0);
+            $qty   = (int) $entry['Qty'];
+            $price = (float) $entry['Price'];
 
             return new AvailabilityData(
                 country:       $country,
@@ -183,10 +170,25 @@ class FiveSimProvider implements SmsProviderInterface
     {
         $res = $this->get("/user/check/{$providerOrderId}");
 
+        Log::debug('[FiveSim] getOrderStatus raw', [
+            'id'     => $providerOrderId,
+            'status' => $res['status'] ?? null,
+            'sms'    => $res['sms'] ?? null,
+        ]);
+
         $otp = null;
         if (!empty($res['sms'])) {
             $last = end($res['sms']);
-            $otp  = $last['code'] ?? null;
+            if (is_array($last)) {
+                // Prefer the parsed code field; fall back to extracting digits from text
+                $otp = $last['code'] ?? null;
+                if (!$otp && !empty($last['text'])) {
+                    // Extract first 4–8 digit sequence from the SMS text
+                    if (preg_match('/\b(\d{4,8})\b/', (string) $last['text'], $m)) {
+                        $otp = $m[1];
+                    }
+                }
+            }
         }
 
         return new OrderStatusData(

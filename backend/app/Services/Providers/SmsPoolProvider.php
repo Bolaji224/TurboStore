@@ -98,38 +98,87 @@ class SmsPoolProvider implements SmsProviderInterface
 
     public function getAvailability(string $country, string $service): AvailabilityData
     {
+        // Map 5sim country names → SMSPool ISO codes
+        $countryCode = $this->mapCountry($country);
+        // Map 5sim service codes → SMSPool service IDs
+        $serviceId   = $this->mapService($service);
+
+        if (!$countryCode || !$serviceId) {
+            return new AvailabilityData($country, $service, 0, 0, 0, false);
+        }
+
         try {
-            $res = $this->post('/pool/retrieve_all', [
-                'country' => $country,
-                'service' => $service,
+            $res = $this->post('/request/price', [
+                'country' => $countryCode,
+                'service' => $serviceId,
             ]);
 
-            if (empty($res) || !is_array($res)) {
+            if (empty($res) || !isset($res['price'])) {
                 return new AvailabilityData($country, $service, 0, 0, 0, false);
             }
 
-            // Cheapest pool
-            $pool  = collect($res)->sortBy('price')->first();
-            $qty   = (int) ($pool['totalstock'] ?? $pool['stock'] ?? 0);
-            $price = (float) ($pool['price'] ?? 0);
+            $price       = (float) $res['price'];
+            $successRate = (int) ($res['success_rate'] ?? 0);
+
+            // Treat as unavailable if success rate is below 40% (not worth trying)
+            if ($price <= 0 || $successRate < 40) {
+                return new AvailabilityData($country, $service, 0, 0, 0, false);
+            }
 
             return new AvailabilityData(
                 country:       $country,
                 service:       $service,
-                qty:           $qty,
+                qty:           999, // SMSPool doesn't expose quantity; non-zero = available
                 providerPrice: $price,
                 customerPrice: $this->pricing->calculateCustomerPrice($price),
-                available:     $qty > 0,
+                available:     true,
             );
         } catch (\Throwable) {
             return new AvailabilityData($country, $service, 0, 0, 0, false);
         }
     }
 
+    // ── Code mappings ────────────────────────────────────────────────────────
+
+    private function mapCountry(string $fiveSimCode): ?string
+    {
+        return [
+            'russia'      => 'RU',  'indonesia'   => 'ID',  'india'       => 'IN',
+            'philippines' => 'PH',  'vietnam'      => 'VN', 'ukraine'      => 'UA',
+            'kazakhstan'  => 'KZ',  'brazil'       => 'BR', 'pakistan'     => 'PK',
+            'bangladesh'  => 'BD',  'nigeria'      => 'NG', 'ghana'        => 'GH',
+            'kenya'       => 'KE',  'ethiopia'     => 'ET', 'tanzania'     => 'TZ',
+            'egypt'       => 'EG',  'myanmar'      => 'MM', 'thailand'     => 'TH',
+            'malaysia'    => 'MY',  'cambodia'     => 'KH', 'laos'         => 'LA',
+            'mexico'      => 'MX',  'colombia'     => 'CO', 'argentina'    => 'AR',
+            'peru'        => 'PE',  'chile'        => 'CL', 'uzbekistan'   => 'UZ',
+            'moldova'     => 'MD',  'kyrgyzstan'   => 'KG', 'tajikistan'   => 'TJ',
+            'georgia'     => 'GE',  'armenia'      => 'AM', 'azerbaijan'   => 'AZ',
+            'morocco'     => 'MA',  'algeria'      => 'DZ', 'senegal'      => 'SN',
+            'cameroon'    => 'CM',  'uganda'       => 'UG', 'zimbabwe'     => 'ZW',
+        ][$fiveSimCode] ?? null;
+    }
+
+    private function mapService(string $fiveSimCode): ?string
+    {
+        return [
+            'whatsapp'   => '1012', 'telegram'  => '907',  'instagram'  => '472',
+            'facebook'   => '316',  'tiktok'    => '931',  'twitter'    => '958',
+            'google'     => '379',  'discord'   => '271',  'snapchat'   => '846',
+            'linkedin'   => '523',  'netflix'   => '630',  'spotify'    => '861',
+            'amazon'     => '57',   'microsoft' => '578',  'apple'      => '48',
+            'paypal'     => '692',  'airbnb'    => '31',   'uber'       => '970',
+            'chatgpt'    => '1021', 'binance'   => '140',
+        ][$fiveSimCode] ?? null;
+    }
+
     // ── Buy Number ──────────────────────────────────────────────────────────
 
     public function buyNumber(string $country, string $service): PurchasedNumberData
     {
+        $countryCode = $this->mapCountry($country) ?? $country;
+        $serviceId   = $this->mapService($service)  ?? $service;
+
         $start = microtime(true);
 
         try {
@@ -137,8 +186,8 @@ class SmsPoolProvider implements SmsProviderInterface
                 ->asForm()
                 ->post("{$this->baseUrl}/purchase/sms", [
                     'key'     => $this->apiKey,
-                    'country' => $country,
-                    'service' => $service,
+                    'country' => $countryCode,
+                    'service' => $serviceId,
                 ]);
         } catch (ConnectionException $e) {
             throw new ProviderTimeoutException('SMSPool connection timed out', 'smspool', 0, $e);

@@ -71,29 +71,21 @@ class NumberController extends Controller
         }
     }
 
-    /** GET /api/numbers/availability?provider=fivesim&country=russia&service=whatsapp */
+    /** GET /api/numbers/availability?country=russia&service=whatsapp */
     public function availability(Request $request)
     {
         $request->validate([
-            'country'  => 'required|string',
-            'service'  => 'required|string',
-            'provider' => 'sometimes|string',
+            'country' => 'required|string',
+            'service' => 'required|string',
         ]);
 
-        $providerName = $request->input('provider', config('sms.default', 'fivesim'));
-        $country      = $request->input('country');
-        $service      = $request->input('service');
+        $country = $request->input('country');
+        $service = $request->input('service');
 
         try {
-            $driver = $this->providerManager->provider($providerName);
-            $data   = $driver->getAvailability($country, $service);
+            $data = $this->providerManager->bestAvailability($country, $service);
 
-            return response()->json([
-                'provider' => $providerName,
-                ...$data->toArray(),
-            ]);
-        } catch (\InvalidArgumentException $e) {
-            return response()->json(['message' => $e->getMessage()], 422);
+            return response()->json($data->toArray());
         } catch (\Throwable) {
             return response()->json(['available' => false, 'qty' => 0, 'customer_price' => 0]);
         }

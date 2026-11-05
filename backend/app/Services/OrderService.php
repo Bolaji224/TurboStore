@@ -33,7 +33,6 @@ class OrderService
      */
     public function placeOrder(
         User   $user,
-        string $provider,
         string $country,
         string $service,
         string $serviceName,
@@ -45,17 +44,11 @@ class OrderService
             return $existing;
         }
 
-        $providerDriver = $this->providerManager->provider($provider);
-
-        // Get price — also confirms availability
-        $availability = $providerDriver->getAvailability($country, $service);
-
-        if (!$availability->available) {
-            throw new ProviderOutOfStockException(
-                'No numbers are currently available for this service and country. Please try another option.',
-                $provider,
-            );
-        }
+        // Priority-ordered list of providers that currently have stock for this service.
+        // First entry is tried first; on ProviderException we fall through to the next.
+        $candidates  = $this->providerManager->priorityList($country, $service);
+        $primary     = $candidates[0];
+        $availability = $primary['availability'];
 
         $customerPrice = $availability->customerPrice;
 
@@ -64,12 +57,12 @@ class OrderService
             throw new \RuntimeException('Insufficient wallet balance. Please top up your wallet.');
         }
 
-        // DB transaction: atomically deduct wallet and create the order record
+        // DB transaction: atomically deduct wallet and create the order record.
+        // Provider is set to the primary candidate; updated below if we fall back.
         $order = DB::transaction(function () use (
-            $user, $provider, $country, $service, $serviceName,
+            $user, $primary, $country, $service, $serviceName,
             $customerPrice, $availability, $idempotencyKey
         ) {
-            // Deduct wallet (re-checks balance with lock inside)
             $this->walletService->deduct(
                 $user,
                 $customerPrice,
@@ -79,7 +72,7 @@ class OrderService
             return Order::create([
                 'reference'       => Order::generateReference(),
                 'user_id'         => $user->id,
-                'provider'        => $provider,
+                'provider'        => $primary['name'],
                 'country'         => $country,
                 'service'         => $service,
                 'service_name'    => $serviceName,
@@ -91,42 +84,55 @@ class OrderService
             ]);
         });
 
-        // Call provider OUTSIDE the DB transaction to avoid holding locks
-        try {
-            $purchased = $providerDriver->buyNumber($country, $service);
+        // Try each provider in priority order. On ProviderException, fall through to the next.
+        // Call outside the DB transaction to avoid holding row locks during slow API calls.
+        $lastException = null;
 
-            $order->update([
-                'provider_order_id' => $purchased->providerOrderId,
-                'phone_number'      => $purchased->phoneNumber,
-                'provider_cost'     => $purchased->providerCost ?: $order->provider_cost,
-                'status'            => 'waiting_for_otp',
-            ]);
+        foreach ($candidates as $candidate) {
+            try {
+                $purchased = $candidate['driver']->buyNumber($country, $service);
 
-            // Schedule OTP polling
-            $delay = config('sms.order.poll_interval', 30);
-            CheckOrderStatusJob::dispatch($order->id)->delay(now()->addSeconds($delay));
+                $order->update([
+                    'provider'          => $candidate['name'],
+                    'provider_order_id' => $purchased->providerOrderId,
+                    'phone_number'      => $purchased->phoneNumber,
+                    'provider_cost'     => $purchased->providerCost ?: $order->provider_cost,
+                    'status'            => 'waiting_for_otp',
+                ]);
 
-            Log::info('[OrderService] Order placed', [
-                'reference'          => $order->reference,
-                'provider'           => $provider,
-                'provider_order_id'  => $purchased->providerOrderId,
-                'phone'              => $purchased->phoneNumber,
-            ]);
-        } catch (ProviderException $e) {
-            // Reverse: refund + mark failed
-            $order->update(['status' => 'failed']);
-            $this->walletService->refundOrder($user, $order);
+                $delay = config('sms.order.poll_interval', 30);
+                CheckOrderStatusJob::dispatch($order->id)->delay(now()->addSeconds($delay));
 
-            Log::error('[OrderService] Provider purchase failed — wallet reversed', [
-                'reference' => $order->reference,
-                'provider'  => $provider,
-                'error'     => $e->getMessage(),
-            ]);
+                Log::info('[OrderService] Order placed', [
+                    'reference'         => $order->reference,
+                    'provider'          => $candidate['name'],
+                    'provider_order_id' => $purchased->providerOrderId,
+                    'phone'             => $purchased->phoneNumber,
+                    'fallback'          => $candidate['name'] !== $primary['name'],
+                ]);
 
-            throw $e; // Re-throw so controller can return a clean response
+                return $order->fresh();
+
+            } catch (ProviderException $e) {
+                $lastException = $e;
+                Log::warning('[OrderService] Provider failed, trying next', [
+                    'reference' => $order->reference,
+                    'provider'  => $candidate['name'],
+                    'error'     => $e->getMessage(),
+                ]);
+            }
         }
 
-        return $order->fresh();
+        // All providers failed — reverse the wallet deduction
+        $order->update(['status' => 'failed']);
+        $this->walletService->refundOrder($user, $order);
+
+        Log::error('[OrderService] All providers failed — wallet reversed', [
+            'reference' => $order->reference,
+            'error'     => $lastException?->getMessage(),
+        ]);
+
+        throw $lastException ?? new ProviderOutOfStockException('All providers failed', 'auto');
     }
 
     /** Poll the provider for the latest order status and update the DB. */
@@ -141,18 +147,45 @@ class OrderService
                 ->provider($order->provider)
                 ->getOrderStatus($order->provider_order_id);
 
-            $updates = ['status' => $statusData->status];
+            Log::info('[OrderService] syncStatus poll', [
+                'reference'  => $order->reference,
+                'provider'   => $order->provider,
+                'raw_status' => $statusData->rawStatus,
+                'normalized' => $statusData->status,
+                'otp'        => $statusData->otp,
+            ]);
 
-            if ($statusData->otp && !$order->otp) {
-                $updates['otp'] = $statusData->otp;
+            // Only promote to otp_received when we actually have the code.
+            // Some providers (5SIM) flip status to RECEIVED before populating sms[],
+            // so keep showing waiting_for_otp until the code is extracted.
+            $resolvedStatus = $statusData->status;
+            if ($statusData->status === 'otp_received' && !$statusData->otp) {
+                $resolvedStatus = $order->status; // stay on current status until code arrives
             }
 
-            if ($statusData->status === 'otp_received' && !$order->otp) {
-                $updates['status'] = 'otp_received';
+            $updates = ['status' => $resolvedStatus];
+
+            if ($statusData->otp && !$order->otp) {
+                $updates['otp']    = $statusData->otp;
+                $updates['status'] = 'otp_received'; // code confirmed — now promote
             }
 
             $order->update($updates);
             $order->refresh();
+
+            // Auto-refund when provider reports the order expired/cancelled
+            if (in_array($order->status, ['expired', 'cancelled']) && !$order->refunded_at) {
+                try {
+                    $this->walletService->refundOrder($order->user, $order);
+                    $order->update(['refunded_at' => now()]);
+                    $order->refresh();
+                } catch (\Throwable $e) {
+                    Log::warning('[OrderService] Auto-refund failed', [
+                        'reference' => $order->reference,
+                        'error'     => $e->getMessage(),
+                    ]);
+                }
+            }
 
             // Record eligible purchase and notify when OTP is confirmed
             if ($order->status === 'otp_received') {
@@ -186,7 +219,6 @@ class OrderService
     public function placeRewardOrder(
         User   $user,
         int    $rewardId,
-        string $provider,
         string $country,
         string $service,
         string $serviceName,
@@ -201,12 +233,14 @@ class OrderService
         // Reserve the reward (validates ownership + availability, throws on failure)
         $reward = $this->referralService->reserveReward($rewardId, $user);
 
-        $providerDriver = $this->providerManager->provider($provider);
+        [
+            'driver' => $providerDriver,
+            'name'   => $providerName,
+        ] = $this->providerManager->autoSelect($country, $service);
 
         try {
             $purchased = $providerDriver->buyNumber($country, $service);
         } catch (ProviderException $e) {
-            // Release the reward so the user can try again
             $this->referralService->releaseReward($reward);
 
             Log::error('[OrderService] Reward order — provider failed, reward released', [
@@ -221,7 +255,7 @@ class OrderService
         $order = Order::create([
             'reference'         => Order::generateReference(),
             'user_id'           => $user->id,
-            'provider'          => $provider,
+            'provider'          => $providerName,
             'country'           => $country,
             'service'           => $service,
             'service_name'      => $serviceName,
