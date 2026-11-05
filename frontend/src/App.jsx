@@ -6,6 +6,7 @@ import Landing from './pages/Landing'
 import Login from './pages/auth/Login'
 import Register from './pages/auth/Register'
 import ForgotPassword from './pages/auth/ForgotPassword'
+import ResetPassword from './pages/auth/ResetPassword'
 import VerifyEmail from './pages/auth/VerifyEmail'
 import SocialCallback from './pages/auth/SocialCallback'
 import DashboardLayout from './components/layout/DashboardLayout'
@@ -20,6 +21,12 @@ import Rewards from './pages/dashboard/Rewards'
 import Profile from './pages/dashboard/Profile'
 import Security from './pages/dashboard/Security'
 import Settings from './pages/dashboard/Settings'
+import MarketplaceLanding from './pages/dashboard/marketplace/MarketplaceLanding'
+import MarketplaceServiceDetail from './pages/dashboard/marketplace/MarketplaceServiceDetail'
+import MarketplaceOrders from './pages/dashboard/marketplace/MarketplaceOrders'
+import MarketplaceOrderDetail from './pages/dashboard/marketplace/MarketplaceOrderDetail'
+import VendorDashboard from './pages/dashboard/marketplace/VendorDashboard'
+import VendorApply from './pages/dashboard/marketplace/VendorApply'
 import AdminLayout from './components/admin/AdminLayout'
 import AdminRoute from './components/admin/AdminRoute'
 import AdminLogin from './pages/admin/AdminLogin'
@@ -32,6 +39,13 @@ import AdminReferrals from './pages/admin/AdminReferrals'
 import AdminReports from './pages/admin/AdminReports'
 import AdminProviders from './pages/admin/AdminProviders'
 import AdminSettings from './pages/admin/AdminSettings'
+import AdminMarketplace from './pages/admin/AdminMarketplace'
+import AdminMarketplaceVendors from './pages/admin/AdminMarketplaceVendors'
+import AdminMarketplaceServices from './pages/admin/AdminMarketplaceServices'
+import AdminMarketplacePayouts from './pages/admin/AdminMarketplacePayouts'
+import AdminSupplierReports from './pages/admin/AdminSupplierReports'
+import SupplierLogin from './pages/supplier/SupplierLogin'
+import SupplierRegister from './pages/supplier/SupplierRegister'
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth()
@@ -61,6 +75,7 @@ export default function App() {
               <Route path="/login" element={<GuestRoute><Login /></GuestRoute>} />
               <Route path="/register" element={<GuestRoute><Register /></GuestRoute>} />
               <Route path="/forgot-password" element={<GuestRoute><ForgotPassword /></GuestRoute>} />
+              <Route path="/reset-password" element={<GuestRoute><ResetPassword /></GuestRoute>} />
               <Route path="/verify-email" element={<VerifyEmail />} />
               <Route path="/auth/callback" element={<SocialCallback />} />
               <Route path="/dashboard" element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
@@ -75,7 +90,17 @@ export default function App() {
                 <Route path="profile" element={<Profile />} />
                 <Route path="security" element={<Security />} />
                 <Route path="settings" element={<Settings />} />
+                <Route path="marketplace" element={<MarketplaceLanding />} />
+                <Route path="marketplace/services/:slug" element={<MarketplaceServiceDetail />} />
+                <Route path="marketplace/orders" element={<MarketplaceOrders />} />
+                <Route path="marketplace/orders/:reference" element={<MarketplaceOrderDetail />} />
+                <Route path="marketplace/vendor" element={<VendorDashboard />} />
+                <Route path="marketplace/vendor/apply" element={<VendorApply />} />
               </Route>
+
+              {/* Supplier portal */}
+              <Route path="/supplier/login"    element={<GuestRoute><SupplierLogin /></GuestRoute>} />
+              <Route path="/supplier/register" element={<GuestRoute><SupplierRegister /></GuestRoute>} />
 
               {/* Admin */}
               <Route path="/admin/login" element={<AdminLogin />} />
@@ -90,6 +115,11 @@ export default function App() {
                 <Route path="reports" element={<AdminReports />} />
                 <Route path="providers" element={<AdminProviders />} />
                 <Route path="settings" element={<AdminSettings />} />
+                <Route path="marketplace" element={<AdminMarketplace />} />
+                <Route path="marketplace/vendors" element={<AdminMarketplaceVendors />} />
+                <Route path="marketplace/services" element={<AdminMarketplaceServices />} />
+                <Route path="marketplace/payouts" element={<AdminMarketplacePayouts />} />
+                <Route path="marketplace/supplier-reports" element={<AdminSupplierReports />} />
               </Route>
 
               <Route path="*" element={<Navigate to="/" replace />} />

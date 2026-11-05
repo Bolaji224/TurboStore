@@ -3,7 +3,7 @@ import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom'
 import {
   LayoutDashboard, Users, ShoppingCart, Wallet, Receipt,
   Settings, LogOut, Menu, X, Shield, ChevronDown, Bell,
-  BarChart3, Gift, Boxes
+  BarChart3, Gift, Boxes, Store, Briefcase, Package, CreditCard, PieChart
 } from 'lucide-react'
 import { useAdminAuth } from '../../context/AdminAuthContext'
 
@@ -23,6 +23,13 @@ const NAV = [
     { to: '/admin/referrals', label: 'Referrals', icon: Gift },
     { to: '/admin/reports',   label: 'Reports',   icon: BarChart3 },
   ]},
+  { section: 'Marketplace', items: [
+    { to: '/admin/marketplace',                  label: 'Marketplace',      icon: Store },
+    { to: '/admin/marketplace/vendors',          label: 'Vendors',          icon: Briefcase },
+    { to: '/admin/marketplace/services',         label: 'Services',         icon: Package },
+    { to: '/admin/marketplace/payouts',          label: 'Supplier Payouts', icon: CreditCard },
+    { to: '/admin/marketplace/supplier-reports', label: 'Supplier Reports', icon: PieChart },
+  ]},
   { section: 'System', items: [
     { to: '/admin/providers', label: 'Providers', icon: Boxes },
     { to: '/admin/settings',  label: 'Settings',  icon: Settings },
@@ -37,8 +44,13 @@ const PAGE_TITLES = {
   '/admin/transactions': 'Transactions',
   '/admin/referrals':    'Referrals',
   '/admin/reports':      'Reports',
-  '/admin/providers':    'Providers',
-  '/admin/settings':     'Settings',
+  '/admin/providers':              'Providers',
+  '/admin/settings':               'Settings',
+  '/admin/marketplace':                    'Marketplace Overview',
+  '/admin/marketplace/vendors':           'Marketplace Vendors',
+  '/admin/marketplace/services':          'Marketplace Services',
+  '/admin/marketplace/payouts':           'Supplier Payouts',
+  '/admin/marketplace/supplier-reports':  'Supplier Reports',
 }
 
 export default function AdminLayout() {
