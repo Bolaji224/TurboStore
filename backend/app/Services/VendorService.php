@@ -22,7 +22,7 @@ class VendorService
             'bio'             => $bio,
             'status'          => 'approved',
             'approved_at'     => now(),
-            'commission_rate' => 10,
+            'commission_rate' => 8,
         ]);
     }
 

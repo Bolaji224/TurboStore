@@ -48,23 +48,43 @@ class MarketplaceOrderController extends Controller
 
     /**
      * GET /api/marketplace/orders
-     * Current user's marketplace order history, paginated.
+     * Current user's marketplace order history, paginated, with optional status filter.
      */
     public function index(Request $request)
     {
-        $query = MarketplaceOrder::where('user_id', $request->user()->id)
-            ->with(['service', 'vendor.user:id,name'])
+        $userId = $request->user()->id;
+
+        $query = MarketplaceOrder::where('user_id', $userId)
+            ->with(['service:id,title,slug', 'vendor:id,business_name'])
             ->orderByDesc('created_at');
+
+        if ($status = $request->input('status')) {
+            $query->where('status', $status);
+        }
 
         $orders = $query->paginate(20);
 
+        // Per-status counts for the stats chips (always across all orders, ignoring the filter)
+        $rawStats = MarketplaceOrder::where('user_id', $userId)
+            ->selectRaw('status, count(*) as cnt')
+            ->groupBy('status')
+            ->pluck('cnt', 'status')
+            ->toArray();
+
+        $stats = array_merge(
+            ['paid' => 0, 'in_progress' => 0, 'delivered' => 0, 'completed' => 0, 'disputed' => 0, 'cancelled' => 0, 'refunded' => 0],
+            $rawStats,
+            ['total' => array_sum($rawStats)]
+        );
+
         return response()->json([
-            'data' => $orders->items(),
-            'meta' => [
+            'data'  => $orders->items(),
+            'meta'  => [
                 'current_page' => $orders->currentPage(),
                 'last_page'    => $orders->lastPage(),
                 'total'        => $orders->total(),
             ],
+            'stats' => $stats,
         ]);
     }
 

@@ -32,6 +32,7 @@ class AuthController extends Controller
         $user = User::create([
             'name'          => $request->name,
             'email'         => $request->email,
+            'user_type'     => 'consumer',
             'password'      => $request->password,
             'referral_code' => strtoupper(Str::random(8)),
             'referred_by'   => $request->referral_code ?? null,
@@ -41,12 +42,15 @@ class AuthController extends Controller
             $this->referralService->handleRegistration($user, $request->referral_code);
         }
 
+        $user->sendEmailVerificationNotification();
+
         $token = JWTAuth::fromUser($user);
 
         return response()->json([
-            'message' => 'Registration successful.',
-            'user'    => $this->formatUser($user),
-            'token'   => $token,
+            'message'           => 'Registration successful. Please verify your email.',
+            'user'              => $this->formatUser($user),
+            'token'             => $token,
+            'needs_verification'=> true,
         ], 201);
     }
 
@@ -68,6 +72,7 @@ class AuthController extends Controller
             $user = User::create([
                 'name'          => $request->name,
                 'email'         => $request->email,
+                'user_type'     => 'supplier',
                 'password'      => $request->password,
                 'referral_code' => strtoupper(Str::random(8)),
             ]);
@@ -78,7 +83,7 @@ class AuthController extends Controller
                 'bio'             => $request->bio ?? '',
                 'status'          => 'approved',
                 'approved_at'     => now(),
-                'commission_rate' => 10,
+                'commission_rate' => 8,
             ]);
 
             return [$user, $vendor];
@@ -205,6 +210,7 @@ class AuthController extends Controller
             'id'               => $user->id,
             'name'             => $user->name,
             'email'            => $user->email,
+            'user_type'        => $user->user_type ?? 'consumer',
             'referral_code'    => $user->referral_code,
             'email_verified'   => $user->hasVerifiedEmail(),
             'wallet_balance'   => (int) $user->wallet_balance,
