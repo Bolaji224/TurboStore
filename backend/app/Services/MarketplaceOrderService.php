@@ -168,8 +168,8 @@ class MarketplaceOrderService
     public function markDelivered(
         MarketplaceOrder $order,
         User $vendorUser,
-        string $deliveryNotes,
-        ?string $deliveryProof
+        array $credentials,
+        ?string $proof = null
     ): void {
         if ($order->status !== 'in_progress') {
             throw new \InvalidArgumentException('Order cannot be delivered (current status: ' . $order->status . ').');
@@ -180,18 +180,19 @@ class MarketplaceOrderService
             throw new \InvalidArgumentException('You do not own this order.');
         }
 
-        DB::transaction(function () use ($order, $vendorUser, $deliveryNotes, $deliveryProof) {
+        DB::transaction(function () use ($order, $vendorUser, $credentials, $proof) {
             $order->update([
-                'status'       => 'delivered',
-                'delivered_at' => now(),
+                'status'              => 'delivered',
+                'delivered_at'        => now(),
+                'account_credentials' => $credentials,
             ]);
 
             MarketplaceOrderEvent::create([
                 'marketplace_order_id' => $order->id,
                 'actor_id'             => $vendorUser->id,
                 'event'                => 'delivered',
-                'note'                 => $deliveryNotes,
-                'metadata'             => $deliveryProof ? ['delivery_proof' => $deliveryProof] : null,
+                'note'                 => 'Account credentials sent to buyer',
+                'metadata'             => $proof ? ['proof' => $proof] : null,
             ]);
         });
     }

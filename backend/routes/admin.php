@@ -69,6 +69,8 @@ Route::middleware(['auth:api', 'admin'])->group(function () {
         Route::post('services/{id}/reject',        [AdminMarketplaceController::class, 'rejectService']);
         Route::post('services/{id}/suspend',       [AdminMarketplaceController::class, 'suspendService']);
         Route::get('orders',                       [AdminMarketplaceController::class, 'orders']);
+        Route::delete('orders/{id}',               [AdminMarketplaceController::class, 'deleteOrder']);
+        Route::delete('services/{id}',             [AdminMarketplaceController::class, 'deleteService']);
         Route::get('disputes',                     [AdminMarketplaceController::class, 'disputes']);
         Route::post('disputes/{id}/resolve',       [AdminMarketplaceController::class, 'resolveDispute']);
         Route::get('payouts',                          [AdminMarketplaceController::class, 'payouts']);

@@ -162,6 +162,27 @@ class AdminMarketplaceController extends Controller
         ]);
     }
 
+    public function deleteOrder(int $id): \Illuminate\Http\JsonResponse
+    {
+        $order = MarketplaceOrder::findOrFail($id);
+
+        if (!in_array($order->status, ['completed', 'cancelled', 'refunded'], true)) {
+            return response()->json(['message' => 'Only completed, cancelled, or refunded orders can be deleted.'], 422);
+        }
+
+        $order->delete();
+
+        return response()->json(['message' => 'Order deleted.']);
+    }
+
+    public function deleteService(int $id): \Illuminate\Http\JsonResponse
+    {
+        $service = MarketplaceService::findOrFail($id);
+        $service->delete();
+
+        return response()->json(['message' => 'Service deleted.']);
+    }
+
     // =========================================================================
     // Disputes
     // =========================================================================

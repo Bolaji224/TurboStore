@@ -85,8 +85,12 @@ class VendorOrderController extends Controller
     public function deliver(string $reference, Request $request, MarketplaceOrderService $service)
     {
         $validated = $request->validate([
-            'delivery_notes' => 'required|string|max:2000',
-            'delivery_proof' => 'nullable|string|max:2000',
+            'login'          => 'required|string|max:255',
+            'password'       => 'required|string|max:255',
+            'recovery_email' => 'nullable|string|max:255',
+            'backup_codes'   => 'nullable|string|max:1000',
+            'notes'          => 'nullable|string|max:2000',
+            'proof'          => 'nullable|string|max:2000',
         ]);
 
         $vendor = $request->user()->vendor;
@@ -95,15 +99,23 @@ class VendorOrderController extends Controller
             ->where('vendor_id', $vendor->id)
             ->firstOrFail();
 
+        $credentials = array_filter([
+            'login'          => $validated['login'],
+            'password'       => $validated['password'],
+            'recovery_email' => $validated['recovery_email'] ?? null,
+            'backup_codes'   => $validated['backup_codes'] ?? null,
+            'notes'          => $validated['notes'] ?? null,
+        ]);
+
         try {
             $service->markDelivered(
                 $order,
                 $request->user(),
-                $validated['delivery_notes'],
-                $validated['delivery_proof'] ?? null,
+                $credentials,
+                $validated['proof'] ?? null,
             );
 
-            return response()->json(['message' => 'Order marked as delivered.']);
+            return response()->json(['message' => 'Account details sent to buyer.']);
         } catch (\InvalidArgumentException $e) {
             return response()->json(['message' => $e->getMessage()], 422);
         }
