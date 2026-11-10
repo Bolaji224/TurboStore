@@ -1,0 +1,3 @@
+# The waitlist site is a separate repository (github.com/Bolaji224/waitlist),
+# deployed independently on Vercel. Keep it out of this repo.
+/waitlist/

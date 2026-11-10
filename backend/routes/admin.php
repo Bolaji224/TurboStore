@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\AdminAuthController;
 use App\Http\Controllers\Admin\AdminDashboardController;
+use App\Http\Controllers\Admin\AdminLaunchCampaignController;
 use App\Http\Controllers\Admin\AdminMarketplaceController;
 use App\Http\Controllers\Admin\AdminOrderController;
 use App\Http\Controllers\Admin\AdminReferralController;
@@ -81,5 +82,14 @@ Route::middleware(['auth:api', 'admin'])->group(function () {
         Route::post('payouts/{id}/reject',             [AdminMarketplaceController::class, 'rejectPayout']);
         Route::get('supplier-reports',                 [AdminMarketplaceController::class, 'supplierReports']);
         Route::get('ledger',                           [AdminMarketplaceController::class, 'ledger']);
+    });
+
+    // ── Waitlist launch campaign ──────────────────────────────────────────────
+    Route::get('launch-campaign',       [AdminLaunchCampaignController::class, 'index']);
+    Route::post('launch-campaign/test', [AdminLaunchCampaignController::class, 'test'])->middleware('throttle:5,1');
+    Route::middleware('admin:super_admin')->group(function () {
+        Route::post('launch-campaign/sync',  [AdminLaunchCampaignController::class, 'sync'])->middleware('throttle:5,1');
+        Route::post('launch-campaign/send',  [AdminLaunchCampaignController::class, 'send'])->middleware('throttle:5,1');
+        Route::post('launch-campaign/retry', [AdminLaunchCampaignController::class, 'retry'])->middleware('throttle:5,1');
     });
 });

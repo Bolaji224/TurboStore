@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AccountActivationController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\Marketplace\MarketplaceCatalogueController;
 use App\Http\Controllers\Marketplace\MarketplaceOrderController;
@@ -21,6 +22,8 @@ use Illuminate\Support\Facades\Route;
 Route::middleware('throttle:5,1')->group(function () {
     Route::post('forgot-password', [PasswordResetController::class, 'forgotPassword']);
     Route::post('reset-password',  [PasswordResetController::class, 'resetPassword']);
+    // Waitlist launch: set password for an account created by the launch campaign
+    Route::post('auth/activate-account', [AccountActivationController::class, 'activate']);
 });
 
 Route::prefix('auth')->group(function () {
@@ -76,7 +79,7 @@ Route::middleware('auth:api')->group(function () {
     Route::get('wallet',               [WalletController::class, 'show']);
     Route::get('wallet/transactions',  [WalletController::class, 'transactions']);
     Route::post('wallet/fund/initiate',        [WalletFundingController::class, 'initiate'])->middleware('throttle:10,1');
-    Route::post('wallet/fund/verify-inline',   [WalletFundingController::class, 'verifyInline']);
+    Route::post('wallet/fund/verify-inline',   [WalletFundingController::class, 'verifyInline'])->middleware('throttle:30,1');
 });
 
 // ── Referrals ─────────────────────────────────────────────────────────────
