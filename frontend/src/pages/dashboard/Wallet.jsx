@@ -11,8 +11,9 @@ export default function Wallet() {
   const [amount, setAmount]         = useState('')
   const [loading, setLoading]       = useState(false)
   const [error, setError]           = useState('')
-  const [psStatus, setPsStatus]     = useState(null) // null | 'success' | 'failed'
+  const [psStatus, setPsStatus]     = useState(null) // null | 'success' | 'pending' | 'review' | 'failed'
   const [psAmount, setPsAmount]     = useState(0)
+  const [psMessage, setPsMessage]   = useState('')
   const [walletData, setWalletData] = useState(null)
   const [fetching, setFetching]     = useState(true)
   const { isDark } = useTheme()
@@ -66,16 +67,12 @@ export default function Wallet() {
       label:    'TurboStore Wallet',
       callback: (response) => {
         setLoading(true)
-        // Step 3: backend verifies and credits wallet (no async — Paystack rejects AsyncFunction)
-        api.post('/wallet/fund/verify-inline', { reference: response.reference })
-          .then(() => {
-            setPsStatus('success')
-            setPsAmount(amt)
-            setAmount('')
-            loadWallet()
-          })
-          .catch(() => setPsStatus('failed'))
-          .finally(() => setLoading(false))
+        setPsAmount(amt)
+        setAmount('')
+        // Step 3: the backend confirms the payment with Paystack server-side and
+        // credits the wallet only if Paystack confirms it. (No async function —
+        // Paystack rejects AsyncFunction callbacks.)
+        confirmPayment(response.reference, 0)
       },
       onClose: () => {
         setLoading(false)
@@ -83,6 +80,42 @@ export default function Wallet() {
     })
 
     handler.openIframe()
+  }
+
+  // Polls verify-inline while Paystack is still confirming (HTTP 202). The
+  // server also keeps reconciling in the background, so stopping here is safe.
+  const POLL_DELAYS_MS = [3000, 5000, 8000, 12000, 20000]
+
+  function confirmPayment(reference, attempt) {
+    api.post('/wallet/fund/verify-inline', { reference })
+      .then(res => {
+        if (res.data?.status === 'success') {
+          setPsStatus('success')
+          setPsMessage('')
+          setLoading(false)
+          loadWallet()
+          return
+        }
+        // 202 pending
+        setPsStatus('pending')
+        setPsMessage(res.data?.message || 'Your payment is being confirmed.')
+        const delay = POLL_DELAYS_MS[attempt]
+        if (delay) {
+          setTimeout(() => confirmPayment(reference, attempt + 1), delay)
+        } else {
+          setLoading(false)
+        }
+      })
+      .catch(err => {
+        const data = err.response?.data
+        if (err.response?.status === 429 && POLL_DELAYS_MS[attempt]) {
+          setTimeout(() => confirmPayment(reference, attempt + 1), POLL_DELAYS_MS[attempt])
+          return
+        }
+        setPsStatus(data?.status === 'review' ? 'review' : 'failed')
+        setPsMessage(data?.message || '')
+        setLoading(false)
+      })
   }
 
   const balance        = walletData ? Math.round(walletData.balance_naira || 0) : 0
@@ -109,6 +142,21 @@ export default function Wallet() {
         <div style={{ background: isDark ? 'rgba(239,68,68,0.15)' : '#FEF2F2', border: '1.5px solid #FECACA', borderRadius: 12, padding: '14px 18px', marginBottom: 20, display: 'flex', alignItems: 'center', gap: 10 }}>
           <AlertCircle size={16} color="#EF4444" style={{ flexShrink: 0 }} />
           <p style={{ margin: 0, fontSize: 14, color: '#DC2626', fontWeight: 500 }}>Payment was not completed. Please try again.</p>
+        </div>
+      )}
+      {psStatus === 'pending' && (
+        <div style={{ background: isDark ? 'rgba(59,130,246,0.15)' : '#EFF6FF', border: '1.5px solid #BFDBFE', borderRadius: 12, padding: '14px 18px', marginBottom: 20, display: 'flex', alignItems: 'center', gap: 10 }}>
+          <RefreshCw size={16} color="#2563EB" style={{ flexShrink: 0, animation: loading ? 'spin 1s linear infinite' : 'none' }} />
+          <p style={{ margin: 0, fontSize: 14, color: '#1D4ED8', fontWeight: 500 }}>
+            {psMessage || `Confirming your ₦${Number(psAmount).toLocaleString()} payment…`}
+            {!loading && ' You can safely leave this page — refresh later to see your updated balance.'}
+          </p>
+        </div>
+      )}
+      {psStatus === 'review' && (
+        <div style={{ background: isDark ? 'rgba(234,179,8,0.15)' : '#FFFBEB', border: '1.5px solid #FDE68A', borderRadius: 12, padding: '14px 18px', marginBottom: 20, display: 'flex', alignItems: 'center', gap: 10 }}>
+          <AlertCircle size={16} color="#D97706" style={{ flexShrink: 0 }} />
+          <p style={{ margin: 0, fontSize: 14, color: '#B45309', fontWeight: 500 }}>{psMessage}</p>
         </div>
       )}
 

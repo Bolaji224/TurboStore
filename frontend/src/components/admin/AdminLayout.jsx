@@ -3,7 +3,7 @@ import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom'
 import {
   LayoutDashboard, Users, ShoppingCart, Wallet, Receipt,
   Settings, LogOut, Menu, X, Shield, ChevronDown, Bell,
-  BarChart3, Gift, Boxes, Store, Briefcase, Package, CreditCard, PieChart
+  BarChart3, Gift, Boxes, Store, Briefcase, Package, CreditCard, PieChart, Rocket
 } from 'lucide-react'
 import { useAdminAuth } from '../../context/AdminAuthContext'
 
@@ -22,6 +22,7 @@ const NAV = [
   { section: 'Growth', items: [
     { to: '/admin/referrals', label: 'Referrals', icon: Gift },
     { to: '/admin/reports',   label: 'Reports',   icon: BarChart3 },
+    { to: '/admin/launch-campaign', label: 'Launch Campaign', icon: Rocket },
   ]},
   { section: 'Marketplace', items: [
     { to: '/admin/marketplace',                  label: 'Marketplace',      icon: Store },
@@ -44,6 +45,7 @@ const PAGE_TITLES = {
   '/admin/transactions': 'Transactions',
   '/admin/referrals':    'Referrals',
   '/admin/reports':      'Reports',
+  '/admin/launch-campaign': 'Launch Campaign',
   '/admin/providers':              'Providers',
   '/admin/settings':               'Settings',
   '/admin/marketplace':                    'Marketplace Overview',

@@ -44,6 +44,8 @@ import AdminMarketplaceVendors from './pages/admin/AdminMarketplaceVendors'
 import AdminMarketplaceServices from './pages/admin/AdminMarketplaceServices'
 import AdminMarketplacePayouts from './pages/admin/AdminMarketplacePayouts'
 import AdminSupplierReports from './pages/admin/AdminSupplierReports'
+import AdminLaunchCampaign from './pages/admin/AdminLaunchCampaign'
+import ActivateAccount from './pages/auth/ActivateAccount'
 import SupplierLogin from './pages/supplier/SupplierLogin'
 import SupplierRegister from './pages/supplier/SupplierRegister'
 
@@ -76,6 +78,8 @@ export default function App() {
               <Route path="/register" element={<GuestRoute><Register /></GuestRoute>} />
               <Route path="/forgot-password" element={<GuestRoute><ForgotPassword /></GuestRoute>} />
               <Route path="/reset-password" element={<GuestRoute><ResetPassword /></GuestRoute>} />
+              {/* Not a GuestRoute: the link must work even if someone else is signed in on this browser */}
+              <Route path="/activate-account" element={<ActivateAccount />} />
               <Route path="/verify-email" element={<VerifyEmail />} />
               <Route path="/auth/callback" element={<SocialCallback />} />
               <Route path="/dashboard" element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
@@ -113,6 +117,7 @@ export default function App() {
                 <Route path="transactions" element={<AdminTransactions />} />
                 <Route path="referrals" element={<AdminReferrals />} />
                 <Route path="reports" element={<AdminReports />} />
+                <Route path="launch-campaign" element={<AdminLaunchCampaign />} />
                 <Route path="providers" element={<AdminProviders />} />
                 <Route path="settings" element={<AdminSettings />} />
                 <Route path="marketplace" element={<AdminMarketplace />} />
