@@ -5,7 +5,7 @@ export default function AuthLayout({ children, title, subtitle }) {
     <div style={{ minHeight: '100vh', display: 'flex', fontFamily: "'Inter', system-ui, sans-serif" }}>
 
       {/* ── Left panel: form ── */}
-      <div style={{
+      <div className="auth-left-panel" style={{
         flex: '0 0 460px',
         background: '#fff',
         display: 'flex',
@@ -15,6 +15,7 @@ export default function AuthLayout({ children, title, subtitle }) {
         boxShadow: '4px 0 40px rgba(0,0,0,0.06)',
         position: 'relative',
         zIndex: 10,
+        overflowY: 'auto',
       }}>
         <div style={{ marginBottom: 44 }}>
           <Logo size="lg" />
@@ -29,7 +30,7 @@ export default function AuthLayout({ children, title, subtitle }) {
       </div>
 
       {/* ── Right panel: dark premium ── */}
-      <div className="landing-dot-grid" style={{
+      <div className="auth-right-panel landing-dot-grid" style={{
         flex: 1,
         background: '#030C06',
         display: 'flex',
@@ -82,10 +83,13 @@ export default function AuthLayout({ children, title, subtitle }) {
         </div>
       </div>
 
-      {/* Hide right panel on small screens */}
       <style>{`
         @media (max-width: 860px) {
-          .auth-right-panel { display: none !important; }
+          .auth-right-panel  { display: none !important; }
+          .auth-left-panel   { flex: 1 1 100% !important; min-width: 0 !important; }
+        }
+        @media (max-width: 480px) {
+          .auth-left-panel   { padding: 40px 24px !important; }
         }
       `}</style>
     </div>

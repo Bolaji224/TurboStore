@@ -221,7 +221,7 @@ export default function DashboardLayout() {
               </button>
 
               {showNotifs && (
-                <div style={{ position: 'absolute', right: 0, top: 'calc(100% + 10px)', width: 320, background: 'var(--card-bg)', border: '1px solid var(--border)', borderRadius: 14, boxShadow: '0 12px 40px rgba(0,0,0,0.14)', zIndex: 200, overflow: 'hidden' }}>
+                <div style={{ position: 'absolute', right: 0, top: 'calc(100% + 10px)', width: 'min(320px, calc(100vw - 20px))', background: 'var(--card-bg)', border: '1px solid var(--border)', borderRadius: 14, boxShadow: '0 12px 40px rgba(0,0,0,0.14)', zIndex: 200, overflow: 'hidden' }}>
                   <div style={{ padding: '14px 16px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)' }}>Notifications</span>
                     {unreadCount > 0 && <span className="badge badge-success">{unreadCount} new</span>}
@@ -298,7 +298,7 @@ export default function DashboardLayout() {
           </div>
         </div>
 
-        <div style={{ padding: 24, background: 'var(--page-bg)', minHeight: 'calc(100vh - 60px)' }}>
+        <div style={{ padding: 'clamp(14px, 3vw, 24px)', background: 'var(--page-bg)', minHeight: 'calc(100vh - 60px)' }}>
           <Outlet />
         </div>
       </div>

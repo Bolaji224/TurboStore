@@ -203,7 +203,7 @@ export default function Landing() {
 
           <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexShrink: 0 }}>
             {/* Telegram */}
-            <a href="#" target="_blank" rel="noopener noreferrer"
+            <a id="nav-telegram" href="#" target="_blank" rel="noopener noreferrer"
               style={{ width: 38, height: 38, borderRadius: 9, border: `1px solid ${tglBdr}`, background: tglBg, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: tglClr, transition: 'all 0.2s', flexShrink: 0, textDecoration: 'none' }}
               onMouseEnter={e => { e.currentTarget.style.borderColor = '#29B6F6'; e.currentTarget.style.color = '#29B6F6'; }}
               onMouseLeave={e => { e.currentTarget.style.borderColor = tglBdr; e.currentTarget.style.color = tglClr; }}>
@@ -214,7 +214,7 @@ export default function Landing() {
             </a>
 
             {/* X (Twitter) */}
-            <a href="#" target="_blank" rel="noopener noreferrer"
+            <a id="nav-twitter" href="#" target="_blank" rel="noopener noreferrer"
               style={{ width: 38, height: 38, borderRadius: 9, border: `1px solid ${tglBdr}`, background: tglBg, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: tglClr, transition: 'all 0.2s', flexShrink: 0, textDecoration: 'none' }}
               onMouseEnter={e => { e.currentTarget.style.borderColor = isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)'; e.currentTarget.style.color = isDark ? '#fff' : '#000'; }}
               onMouseLeave={e => { e.currentTarget.style.borderColor = tglBdr; e.currentTarget.style.color = tglClr; }}>
@@ -231,7 +231,7 @@ export default function Landing() {
               {isDark ? <Sun size={16} /> : <Moon size={16} />}
             </button>
 
-            <Link to="/supplier/register"
+            <Link id="nav-sell" to="/supplier/register"
               style={{ fontSize: 14, fontWeight: 600, color: isDark ? '#4ADE80' : '#16A34A', textDecoration: 'none', padding: '8px 4px', borderRadius: 9, transition: 'opacity 0.2s' }}
               onMouseEnter={e => e.currentTarget.style.opacity = '0.7'}
               onMouseLeave={e => e.currentTarget.style.opacity = '1'}>
@@ -801,6 +801,16 @@ console.`}<span style={{ color: '#2DD4BF' }}>log</span>{`(`}<span style={{ color
           #testimonials-grid { grid-template-columns: 1fr !important; }
           #footer-grid       { grid-template-columns: 1fr !important; }
           #metrics-bar       { grid-template-columns: 1fr 1fr !important; }
+        }
+        @media (max-width: 540px) {
+          #nav-telegram { display: none !important; }
+          #nav-twitter  { display: none !important; }
+          #nav-sell     { display: none !important; }
+          #hero { padding: 80px 20px 50px !important; }
+          #hero h1 span { letter-spacing: -1px !important; }
+        }
+        @media (max-width: 400px) {
+          #metrics-bar   { grid-template-columns: 1fr !important; }
         }
       `}</style>
     </div>

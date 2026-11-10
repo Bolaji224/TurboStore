@@ -7,6 +7,7 @@ use App\Services\Providers\FiveSimProvider;
 use App\Services\Providers\GrizzlyProvider;
 use App\Services\Providers\SmsPoolProvider;
 use App\Services\ProviderManager;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -40,6 +41,6 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
-        //
+        Schema::defaultStringLength(191);
     }
 }
