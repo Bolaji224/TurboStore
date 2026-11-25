@@ -156,6 +156,7 @@ class OrderController extends Controller
             'service_name'     => $order->service_name,
             'phone_number'     => $order->phone_number,
             'status'           => $order->status,
+            'failure_reason'   => $order->failure_reason,
             'otp'              => $order->otp,
             'customer_price'   => $order->customer_price,
             'formatted_price'  => $order->formattedPrice(),

@@ -2,8 +2,12 @@
 
 namespace App\Services;
 
+use App\Exceptions\Provider\ProviderAuthenticationException;
 use App\Exceptions\Provider\ProviderException;
+use App\Exceptions\Provider\ProviderInsufficientBalanceException;
 use App\Exceptions\Provider\ProviderOutOfStockException;
+use App\Exceptions\Provider\ProviderTimeoutException;
+use App\Exceptions\Provider\ProviderUnavailableException;
 use App\Jobs\CheckOrderStatusJob;
 use App\Models\Order;
 use App\Models\ReferralReward;
@@ -124,7 +128,10 @@ class OrderService
         }
 
         // All providers failed — reverse the wallet deduction
-        $order->update(['status' => 'failed']);
+        $order->update([
+            'status'         => 'failed',
+            'failure_reason' => $this->describeFailure($lastException),
+        ]);
         $this->walletService->refundOrder($user, $order);
 
         Log::error('[OrderService] All providers failed — wallet reversed', [
@@ -281,6 +288,19 @@ class OrderService
         ]);
 
         return $order->fresh();
+    }
+
+    private function describeFailure(?\Throwable $e): string
+    {
+        return match (true) {
+            $e instanceof ProviderOutOfStockException         => 'No numbers available for this service in the selected country',
+            $e instanceof ProviderTimeoutException            => 'Provider connection timed out — please try again',
+            $e instanceof ProviderAuthenticationException     => 'Provider configuration error — please contact support',
+            $e instanceof ProviderInsufficientBalanceException => 'Provider account issue — please contact support',
+            $e instanceof ProviderUnavailableException        => 'Provider temporarily unavailable — please try again',
+            $e instanceof ProviderException                   => 'Provider rejected the purchase — please try again',
+            default                                           => 'Purchase failed — please try again',
+        };
     }
 
     /** Cancel an active order and refund the customer. */

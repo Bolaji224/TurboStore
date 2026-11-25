@@ -87,7 +87,7 @@ class GrizzlyProvider implements SmsProviderInterface
                 name:          $this->formatServiceName((string) $service),
                 qty:           (int) ($data['count'] ?? 0),
                 providerPrice: (float) ($data['cost'] ?? 0),
-                customerPrice: $this->pricing->calculateCustomerPrice((float) ($data['cost'] ?? 0)),
+                customerPrice: $this->pricing->calculateCustomerPrice((float) ($data['cost'] ?? 0), $country, (string) $service),
             ))
             ->sortBy('name')
             ->values()
@@ -118,7 +118,7 @@ class GrizzlyProvider implements SmsProviderInterface
                 service:       $service,
                 qty:           $qty,
                 providerPrice: $price,
-                customerPrice: $this->pricing->calculateCustomerPrice($price),
+                customerPrice: $this->pricing->calculateCustomerPrice($price, $country, $service),
                 available:     $qty > 0,
             );
         } catch (\Throwable) {

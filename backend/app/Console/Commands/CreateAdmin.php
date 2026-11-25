@@ -9,7 +9,7 @@ use Illuminate\Support\Str;
 
 class CreateAdmin extends Command
 {
-    protected $signature   = 'admin:create {--email= : Admin email} {--name= : Admin name} {--super : Create as super_admin}';
+    protected $signature   = 'admin:create {--email= : Admin email} {--name= : Admin name} {--password= : Admin password (auto-generated if omitted)} {--super : Create as super_admin}';
     protected $description = 'Create or promote a user to admin';
 
     public function handle(): int
@@ -26,7 +26,8 @@ class CreateAdmin extends Command
         }
 
         $name     = $this->option('name') ?? $this->ask('Name');
-        $password = $this->secret('Password (leave blank to auto-generate)') ?: Str::random(16);
+        $password = $this->option('password')
+            ?: ($this->secret('Password (leave blank to auto-generate)') ?: Str::random(16));
 
         $user = User::create([
             'name'          => $name,
@@ -38,9 +39,7 @@ class CreateAdmin extends Command
         ]);
 
         $this->info("Admin created: {$user->email} ({$role})");
-        if (!$this->option('email')) {
-            $this->line("Password: {$password}");
-        }
+        $this->line("Password: {$password}");
 
         return 0;
     }

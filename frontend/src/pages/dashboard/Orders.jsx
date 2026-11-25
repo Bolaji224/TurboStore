@@ -199,6 +199,14 @@ export default function Orders() {
                               Cancel & Refund
                             </button>
                           )}
+                          {['failed', 'expired'].includes(order.status) && order.failure_reason && (
+                            <span style={{ fontSize: 10, color: '#DC2626', lineHeight: 1.3, maxWidth: 160 }}>
+                              {order.failure_reason}
+                            </span>
+                          )}
+                          {['failed', 'expired', 'refunded'].includes(order.status) && (
+                            <span style={{ fontSize: 10, color: '#16A34A' }}>Wallet refunded</span>
+                          )}
                         </div>
                       </td>
                       <td style={{ padding: '12px 16px', fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>{order.formatted_price}</td>

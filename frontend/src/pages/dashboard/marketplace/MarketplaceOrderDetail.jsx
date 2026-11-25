@@ -275,30 +275,37 @@ export default function MarketplaceOrderDetail() {
         </div>
       </div>
 
-      {/* Requirements */}
+      {/* Transfer Details */}
       {order.requirements && (
         <div className="card" style={{ padding: 20, marginBottom: 16 }}>
-          <h3 style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '.5px', margin: '0 0 10px' }}>Your Requirements</h3>
+          <h3 style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '.5px', margin: '0 0 10px' }}>Transfer Details</h3>
           <p style={{ fontSize: 14, color: 'var(--text)', lineHeight: 1.6, margin: 0, whiteSpace: 'pre-wrap' }}>{order.requirements}</p>
         </div>
       )}
 
-      {/* Delivery section */}
-      {hasDelivery && (order.delivery_notes || order.proof) && (
+      {/* Delivery section — account credentials */}
+      {hasDelivery && order.account_credentials && (
         <div className="card" style={{ padding: 20, marginBottom: 16, borderLeft: '3px solid #16A34A' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
             <CheckCircle size={18} color="#16A34A" />
-            <h3 style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)', margin: 0 }}>Delivery from Vendor</h3>
+            <h3 style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)', margin: 0 }}>Account Login Details</h3>
           </div>
-          {order.delivery_notes && (
-            <p style={{ fontSize: 14, color: 'var(--text)', lineHeight: 1.6, margin: '0 0 10px', whiteSpace: 'pre-wrap' }}>{order.delivery_notes}</p>
-          )}
-          {order.proof && (
-            <div style={{ marginTop: 8 }}>
-              <p style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', margin: '0 0 6px' }}>PROOF / SCREENSHOT</p>
-              <img src={order.proof} alt="Delivery proof" style={{ maxWidth: '100%', borderRadius: 8, border: '1px solid var(--border)' }} />
-            </div>
-          )}
+          <p style={{ fontSize: 12, color: '#F59E0B', margin: '0 0 14px' }}>
+            Save these credentials and change the password immediately after logging in.
+          </p>
+          <div style={{ background: 'var(--page-bg)', border: '1px solid var(--border)', borderRadius: 10, overflow: 'hidden' }}>
+            {[
+              { label: 'Login / Email', value: order.account_credentials.login },
+              { label: 'Password',      value: order.account_credentials.password },
+              order.account_credentials.recovery_email && { label: 'Recovery Email', value: order.account_credentials.recovery_email },
+              order.account_credentials.notes          && { label: 'Notes',           value: order.account_credentials.notes },
+            ].filter(Boolean).map((row, i, arr) => (
+              <div key={row.label} style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: '10px 14px', borderBottom: i < arr.length - 1 ? '1px solid var(--border)' : 'none' }}>
+                <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', width: 110, flexShrink: 0, paddingTop: 1 }}>{row.label}</span>
+                <code style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)', wordBreak: 'break-all', flex: 1 }}>{row.value}</code>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
@@ -338,7 +345,7 @@ export default function MarketplaceOrderDetail() {
               disabled={actionLoading}
               onClick={handleConfirm}>
               <CheckCircle size={16} />
-              {actionLoading ? 'Confirming…' : 'Confirm Completion'}
+              {actionLoading ? 'Confirming…' : 'I\'ve Received the Account'}
             </button>
           )}
           {canDispute && (

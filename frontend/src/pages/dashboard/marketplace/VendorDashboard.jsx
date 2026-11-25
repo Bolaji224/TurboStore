@@ -53,15 +53,18 @@ function Modal({ title, onClose, width = 540, children }) {
 }
 
 /* ─── Service Form (add / edit) ───────────────────────────── */
-const EMPTY_SVC = { category_id: '', title: '', description: '', platform: 'general', what_you_get: '', requirements: '', starting_price: '', delivery_days: '', refund_policy: '' }
+const EMPTY_SVC = { title: '', description: '', platform: 'general', requirements: '', starting_price: '', delivery_days: '' }
 
 function ServiceForm({ initial, categories, onSave, onClose }) {
-  const [form,      setForm]      = useState(initial || EMPTY_SVC)
-  const [imageFile, setImageFile] = useState(null)
-  const [imagePreview, setImagePreview] = useState(initial?.image_url || null)
-  const [loading,   setLoading]   = useState(false)
-  const [error,     setError]     = useState('')
-  const fileRef = useRef()
+  const [form,          setForm]          = useState(initial || EMPTY_SVC)
+  const [imageFile,     setImageFile]     = useState(null)
+  const [imagePreview,  setImagePreview]  = useState(initial?.image_url || null)
+  const [extraFiles,    setExtraFiles]    = useState([])
+  const [extraPreviews, setExtraPreviews] = useState(initial?.extra_images || [])
+  const [loading,       setLoading]       = useState(false)
+  const [error,         setError]         = useState('')
+  const fileRef      = useRef()
+  const extraFileRef = useRef()
 
   function set(k, v) { setForm(f => ({ ...f, [k]: v })) }
 
@@ -72,6 +75,28 @@ function ServiceForm({ initial, categories, onSave, onClose }) {
     setImagePreview(URL.createObjectURL(file))
   }
 
+  function handleExtraImages(e) {
+    const files = Array.from(e.target.files)
+    const remaining = 4 - extraPreviews.filter(p => typeof p === 'string' && p.startsWith('http')).length - extraFiles.length
+    const toAdd = files.slice(0, Math.max(0, remaining))
+    setExtraFiles(prev => [...prev, ...toAdd])
+    setExtraPreviews(prev => [...prev, ...toAdd.map(f => URL.createObjectURL(f))])
+    e.target.value = ''
+  }
+
+  function removeExtra(idx) {
+    setExtraFiles(prev => {
+      const existingCount = extraPreviews.filter(p => typeof p === 'string' && p.startsWith('http') && !p.startsWith('blob')).length
+      if (idx >= existingCount) {
+        const newFiles = [...prev]
+        newFiles.splice(idx - existingCount, 1)
+        return newFiles
+      }
+      return prev
+    })
+    setExtraPreviews(prev => prev.filter((_, i) => i !== idx))
+  }
+
   async function submit(asDraft) {
     if (!form.title.trim())   { setError('Title is required.'); return }
     if (!form.starting_price) { setError('Starting price is required.'); return }
@@ -79,16 +104,14 @@ function ServiceForm({ initial, categories, onSave, onClose }) {
     setLoading(true); setError('')
     try {
       const fd = new FormData()
-      fd.append('category_id',         form.category_id)
       fd.append('title',               form.title)
       fd.append('description',         form.description)
       fd.append('platform',            form.platform)
-      fd.append('what_you_get',        form.what_you_get)
       fd.append('requirements',        form.requirements || '')
-      fd.append('refund_policy',       form.refund_policy || '')
       fd.append('starting_price_kobo', Math.round(Number(form.starting_price) * 100))
       fd.append('delivery_days',       Number(form.delivery_days))
       if (imageFile) fd.append('image', imageFile)
+      extraFiles.forEach(f => fd.append('extra_images[]', f))
 
       let res
       const cfg = { headers: { 'Content-Type': 'multipart/form-data' } }
@@ -110,22 +133,11 @@ function ServiceForm({ initial, categories, onSave, onClose }) {
   const fields = [
     { key: 'title',         label: 'Title',           type: 'input',    placeholder: 'e.g. 1000 Real Instagram Followers', required: true },
     { key: 'description',   label: 'Description',     type: 'textarea', placeholder: 'Describe your service…', rows: 3 },
-    { key: 'what_you_get',  label: 'What You Get',    type: 'textarea', placeholder: 'List what customer receives, one per line…', rows: 3 },
-    { key: 'requirements',  label: 'Requirements',    type: 'textarea', placeholder: 'What info do you need from the customer?', rows: 2 },
-    { key: 'refund_policy', label: 'Refund Policy',   type: 'textarea', placeholder: 'Describe your refund policy…', rows: 2 },
+    { key: 'requirements',  label: 'Transfer Requirements',    type: 'textarea', placeholder: 'What info does the buyer need to provide for you to transfer the account? (e.g. their email address, phone number)', rows: 2 },
   ]
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-      {/* Category */}
-      <div>
-        <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', display: 'block', marginBottom: 5 }}>Category</label>
-        <select className="input" style={{ width: '100%' }} value={form.category_id} onChange={e => set('category_id', e.target.value)}>
-          <option value="">Select category</option>
-          {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-        </select>
-      </div>
-
       {/* Platform */}
       <div>
         <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', display: 'block', marginBottom: 5 }}>Platform</label>
@@ -161,6 +173,32 @@ function ServiceForm({ initial, categories, onSave, onClose }) {
             <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>JPG, PNG, WebP — max 2MB</span>
           </button>
         )}
+      </div>
+
+      {/* Extra Images */}
+      <div>
+        <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', display: 'block', marginBottom: 5 }}>
+          Additional Images <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>(optional — up to 4 more)</span>
+        </label>
+        <input ref={extraFileRef} type="file" accept="image/*" multiple style={{ display: 'none' }} onChange={handleExtraImages} />
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          {extraPreviews.map((src, idx) => (
+            <div key={idx} style={{ position: 'relative', width: 72, height: 72 }}>
+              <img src={src} alt="" style={{ width: 72, height: 72, objectFit: 'cover', borderRadius: 8, border: '1px solid var(--border)' }} />
+              <button type="button" onClick={() => removeExtra(idx)}
+                style={{ position: 'absolute', top: -6, right: -6, width: 18, height: 18, borderRadius: '50%', background: '#EF4444', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', padding: 0 }}>
+                <X size={10} />
+              </button>
+            </div>
+          ))}
+          {extraPreviews.length < 4 && (
+            <button type="button" onClick={() => extraFileRef.current?.click()}
+              style={{ width: 72, height: 72, borderRadius: 8, border: '2px dashed var(--border)', background: 'var(--section-alt)', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4, fontFamily: 'inherit' }}>
+              <ImagePlus size={18} color="var(--text-muted)" />
+              <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>Add</span>
+            </button>
+          )}
+        </div>
       </div>
 
       {fields.map(f => (
@@ -207,16 +245,26 @@ function ServiceForm({ initial, categories, onSave, onClose }) {
 
 /* ─── Deliver Modal ───────────────────────────────────────── */
 function DeliverModal({ orderRef, onDone, onClose }) {
-  const [notes,   setNotes]   = useState('')
-  const [proof,   setProof]   = useState('')
-  const [loading, setLoading] = useState(false)
-  const [error,   setError]   = useState('')
+  const [login,         setLogin]         = useState('')
+  const [password,      setPassword]      = useState('')
+  const [recoveryEmail, setRecoveryEmail] = useState('')
+  const [notes,         setNotes]         = useState('')
+  const [proof,         setProof]         = useState('')
+  const [loading,       setLoading]       = useState(false)
+  const [error,         setError]         = useState('')
 
   async function submit() {
-    if (!notes.trim()) { setError('Delivery notes are required.'); return }
+    if (!login.trim())    { setError('Login / email is required.'); return }
+    if (!password.trim()) { setError('Password is required.'); return }
     setLoading(true); setError('')
     try {
-      await api.post(`/vendor/orders/${orderRef}/deliver`, { delivery_notes: notes, proof })
+      await api.post(`/vendor/orders/${orderRef}/deliver`, {
+        login,
+        password,
+        ...(recoveryEmail.trim() && { recovery_email: recoveryEmail }),
+        ...(notes.trim()         && { notes }),
+        ...(proof.trim()         && { proof }),
+      })
       onDone()
     } catch (e) {
       setError(e.response?.data?.message || 'Failed to mark as delivered.')
@@ -225,21 +273,30 @@ function DeliverModal({ orderRef, onDone, onClose }) {
     }
   }
 
+  const field = (label, val, set, placeholder, required = false) => (
+    <div>
+      <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', display: 'block', marginBottom: 5 }}>
+        {label} {required && <span style={{ color: '#EF4444' }}>*</span>}
+      </label>
+      <input className="input" style={{ width: '100%' }} placeholder={placeholder} value={val} onChange={e => set(e.target.value)} />
+    </div>
+  )
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+      {field('Account Login / Email', login, setLogin, 'e.g. username@gmail.com', true)}
+      {field('Password', password, setPassword, 'Account password', true)}
+      {field('Recovery Email (optional)', recoveryEmail, setRecoveryEmail, 'Backup email if any')}
       <div>
-        <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', display: 'block', marginBottom: 5 }}>Delivery Notes <span style={{ color: '#EF4444' }}>*</span></label>
-        <textarea className="input" rows={4} style={{ width: '100%', resize: 'vertical', fontFamily: 'inherit' }} placeholder="Describe what was delivered…" value={notes} onChange={e => setNotes(e.target.value)} />
+        <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', display: 'block', marginBottom: 5 }}>Extra Notes (optional)</label>
+        <textarea className="input" rows={2} style={{ width: '100%', resize: 'vertical', fontFamily: 'inherit' }} placeholder="Any additional steps or info for the buyer…" value={notes} onChange={e => setNotes(e.target.value)} />
       </div>
-      <div>
-        <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', display: 'block', marginBottom: 5 }}>Proof URL (screenshot link, optional)</label>
-        <input className="input" style={{ width: '100%' }} placeholder="https://…" value={proof} onChange={e => setProof(e.target.value)} />
-      </div>
+      {field('Proof URL (screenshot link, optional)', proof, setProof, 'https://…')}
       {error && <div style={{ background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: 8, padding: '10px 14px' }}><p style={{ color: '#DC2626', fontSize: 13, margin: 0 }}>{error}</p></div>}
       <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
         <button className="btn-secondary" onClick={onClose}>Cancel</button>
         <button className="btn-primary" disabled={loading} onClick={submit}>
-          {loading ? 'Submitting…' : 'Mark as Delivered'}
+          {loading ? 'Submitting…' : 'Send Account to Buyer'}
         </button>
       </div>
     </div>
@@ -468,7 +525,7 @@ function VendorOrdersTab() {
                 </div>
                 {order.requirements && (
                   <p style={{ fontSize: 12, color: 'var(--text-muted)', margin: '0 0 10px', lineHeight: 1.5, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-                    <strong>Requirements:</strong> {order.requirements}
+                    <strong>Buyer Transfer Details:</strong> {order.requirements}
                   </p>
                 )}
                 <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>

@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { Search, ChevronLeft, ChevronRight, CheckCircle, Star, ShoppingBag, Package } from 'lucide-react'
 import api from '../../../services/api'
+import { useAuth } from '../../../context/AuthContext'
 
 const PLATFORM_COLORS = {
   facebook:  '#1877F2',
@@ -87,9 +88,9 @@ function ServiceCard({ service, onView, onOrder }) {
       {/* Vendor */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
         <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>
-          by <span style={{ color: 'var(--text)', fontWeight: 600 }}>{service.vendor_name || 'Unknown'}</span>
+          by <span style={{ color: 'var(--text)', fontWeight: 600 }}>{service.vendor?.business_name || service.vendor_name || 'Unknown'}</span>
         </span>
-        {service.vendor_approved && (
+        {(service.vendor?.status === 'approved' || service.vendor_approved) && (
           <CheckCircle size={12} color="#16A34A" fill="#16A34A" />
         )}
       </div>
@@ -142,6 +143,7 @@ function SkeletonCard() {
 
 export default function MarketplaceLanding() {
   const navigate = useNavigate()
+  const { user } = useAuth()
 
   const [categories, setCategories]       = useState([])
   const [services,   setServices]         = useState([])
@@ -212,16 +214,18 @@ export default function MarketplaceLanding() {
       {/* Page header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24, flexWrap: 'wrap', gap: 12 }}>
         <div>
-          <h2 style={{ fontSize: 20, fontWeight: 800, color: 'var(--text)', margin: '0 0 4px' }}>Social Media Services</h2>
-          <p style={{ fontSize: 14, color: 'var(--text-muted)', margin: 0 }}>Grow your social media presence with trusted vendors</p>
+          <h2 style={{ fontSize: 20, fontWeight: 800, color: 'var(--text)', margin: '0 0 4px' }}>Social Media Accounts</h2>
+          <p style={{ fontSize: 14, color: 'var(--text-muted)', margin: 0 }}>Buy verified social media accounts from trusted sellers</p>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
           <Link to="/dashboard/marketplace/orders" className="btn-secondary" style={{ fontSize: 13, display: 'flex', alignItems: 'center', gap: 6, textDecoration: 'none' }}>
             <Package size={14} /> My Orders
           </Link>
-          <Link to="/dashboard/marketplace/vendor" className="btn-primary" style={{ fontSize: 13, display: 'flex', alignItems: 'center', gap: 6, textDecoration: 'none' }}>
-            <ShoppingBag size={14} /> Vendor Dashboard
-          </Link>
+          {user?.user_type === 'supplier' && (
+            <Link to="/dashboard/marketplace/vendor" className="btn-primary" style={{ fontSize: 13, display: 'flex', alignItems: 'center', gap: 6, textDecoration: 'none' }}>
+              <ShoppingBag size={14} /> Vendor Dashboard
+            </Link>
+          )}
         </div>
       </div>
 
@@ -305,8 +309,8 @@ export default function MarketplaceLanding() {
 
       {/* Error state */}
       {error && (
-        <div style={{ background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: 10, padding: '14px 16px', marginBottom: 20, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <p style={{ color: '#DC2626', fontSize: 14, margin: 0 }}>{error}</p>
+        <div style={{ background: 'rgba(220,38,38,0.1)', border: '1px solid rgba(220,38,38,0.25)', borderRadius: 10, padding: '14px 16px', marginBottom: 20, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <p style={{ color: '#FCA5A5', fontSize: 14, margin: 0 }}>{error}</p>
           <button className="btn-secondary" style={{ fontSize: 13, padding: '6px 14px' }} onClick={() => setPage(p => p)}>Retry</button>
         </div>
       )}

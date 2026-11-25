@@ -9,3 +9,5 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote');
 
 Schedule::command('marketplace:auto-complete')->hourly();
+Schedule::command('orders:sync-active')->everyMinute();
+Schedule::command('payments:reconcile --older-than=2')->everyFiveMinutes();

@@ -86,7 +86,7 @@ class SmsPoolProvider implements SmsProviderInterface
                 name:          $s['name'] ?? '',
                 qty:           0, // Availability varies per pool; populated on demand
                 providerPrice: (float) ($s['price'] ?? 0),
-                customerPrice: $this->pricing->calculateCustomerPrice((float) ($s['price'] ?? 0)),
+                customerPrice: $this->pricing->calculateCustomerPrice((float) ($s['price'] ?? 0), $country, (string) ($s['sms_name'] ?? $s['ID'] ?? '')),
             ))
             ->filter(fn($s) => $s->code !== '')
             ->sortBy('name')
@@ -130,7 +130,7 @@ class SmsPoolProvider implements SmsProviderInterface
                 service:       $service,
                 qty:           999, // SMSPool doesn't expose quantity; non-zero = available
                 providerPrice: $price,
-                customerPrice: $this->pricing->calculateCustomerPrice($price),
+                customerPrice: $this->pricing->calculateCustomerPrice($price, $country, $service),
                 available:     true,
             );
         } catch (\Throwable) {
@@ -143,19 +143,46 @@ class SmsPoolProvider implements SmsProviderInterface
     private function mapCountry(string $fiveSimCode): ?string
     {
         return [
-            'russia'      => 'RU',  'indonesia'   => 'ID',  'india'       => 'IN',
-            'philippines' => 'PH',  'vietnam'      => 'VN', 'ukraine'      => 'UA',
-            'kazakhstan'  => 'KZ',  'brazil'       => 'BR', 'pakistan'     => 'PK',
-            'bangladesh'  => 'BD',  'nigeria'      => 'NG', 'ghana'        => 'GH',
-            'kenya'       => 'KE',  'ethiopia'     => 'ET', 'tanzania'     => 'TZ',
-            'egypt'       => 'EG',  'myanmar'      => 'MM', 'thailand'     => 'TH',
-            'malaysia'    => 'MY',  'cambodia'     => 'KH', 'laos'         => 'LA',
-            'mexico'      => 'MX',  'colombia'     => 'CO', 'argentina'    => 'AR',
-            'peru'        => 'PE',  'chile'        => 'CL', 'uzbekistan'   => 'UZ',
-            'moldova'     => 'MD',  'kyrgyzstan'   => 'KG', 'tajikistan'   => 'TJ',
-            'georgia'     => 'GE',  'armenia'      => 'AM', 'azerbaijan'   => 'AZ',
-            'morocco'     => 'MA',  'algeria'      => 'DZ', 'senegal'      => 'SN',
-            'cameroon'    => 'CM',  'uganda'       => 'UG', 'zimbabwe'     => 'ZW',
+            // Asia & CIS
+            'russia'        => 'RU',  'indonesia'    => 'ID',  'india'        => 'IN',
+            'philippines'   => 'PH',  'vietnam'      => 'VN',  'ukraine'      => 'UA',
+            'kazakhstan'    => 'KZ',  'brazil'       => 'BR',  'pakistan'     => 'PK',
+            'bangladesh'    => 'BD',  'myanmar'      => 'MM',  'thailand'     => 'TH',
+            'malaysia'      => 'MY',  'cambodia'     => 'KH',  'laos'         => 'LA',
+            'uzbekistan'    => 'UZ',  'kyrgyzstan'   => 'KG',  'tajikistan'   => 'TJ',
+            'georgia'       => 'GE',  'armenia'      => 'AM',  'azerbaijan'   => 'AZ',
+            'moldova'       => 'MD',  'china'        => 'CN',  'japan'        => 'JP',
+            'southkorea'    => 'KR',  'hongkong'     => 'HK',  'taiwan'       => 'TW',
+            'singapore'     => 'SG',  'srilanka'     => 'LK',  'nepal'        => 'NP',
+            'mongolia'      => 'MN',  'iran'         => 'IR',  'iraq'         => 'IQ',
+            'israel'        => 'IL',  'turkey'       => 'TR',  'saudiarabia'  => 'SA',
+            'uae'           => 'AE',  'kuwait'       => 'KW',  'qatar'        => 'QA',
+            // Europe
+            'spain'         => 'ES',  'france'       => 'FR',  'germany'      => 'DE',
+            'italy'         => 'IT',  'portugal'     => 'PT',  'netherlands'  => 'NL',
+            'belgium'       => 'BE',  'switzerland'  => 'CH',  'austria'      => 'AT',
+            'sweden'        => 'SE',  'norway'       => 'NO',  'denmark'      => 'DK',
+            'finland'       => 'FI',  'poland'       => 'PL',  'czechia'      => 'CZ',
+            'romania'       => 'RO',  'hungary'      => 'HU',  'bulgaria'     => 'BG',
+            'croatia'       => 'HR',  'serbia'       => 'RS',  'slovakia'     => 'SK',
+            'greece'        => 'GR',  'ireland'      => 'IE',  'lithuania'    => 'LT',
+            'latvia'        => 'LV',  'estonia'      => 'EE',  'belarus'      => 'BY',
+            'unitedkingdom' => 'GB',  'uk'           => 'GB',  'england'      => 'GB',
+            // Americas
+            'mexico'        => 'MX',  'colombia'     => 'CO',  'argentina'    => 'AR',
+            'peru'          => 'PE',  'chile'        => 'CL',  'venezuela'    => 'VE',
+            'ecuador'       => 'EC',  'bolivia'      => 'BO',  'paraguay'     => 'PY',
+            'uruguay'       => 'UY',  'cuba'         => 'CU',  'dominicanrepublic' => 'DO',
+            'unitedstates'  => 'US',  'usa'          => 'US',  'canada'       => 'CA',
+            // Africa
+            'nigeria'       => 'NG',  'ghana'        => 'GH',  'kenya'        => 'KE',
+            'ethiopia'      => 'ET',  'tanzania'     => 'TZ',  'egypt'        => 'EG',
+            'morocco'       => 'MA',  'algeria'      => 'DZ',  'senegal'      => 'SN',
+            'cameroon'      => 'CM',  'uganda'       => 'UG',  'zimbabwe'     => 'ZW',
+            'southafrica'   => 'ZA',  'angola'       => 'AO',  'mozambique'   => 'MZ',
+            'madagascar'    => 'MG',  'cotedivoire'  => 'CI',  'mali'         => 'ML',
+            'burkinafaso'   => 'BF',  'niger'        => 'NE',  'chad'         => 'TD',
+            'rwanda'        => 'RW',  'zambia'       => 'ZM',  'malawi'       => 'MW',
         ][$fiveSimCode] ?? null;
     }
 

@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\MarketplaceOrder;
 use App\Models\Notification;
 use App\Models\Order;
 use App\Models\ReferralRelationship;
@@ -55,6 +56,29 @@ class NotificationService
             'body'    => "Your {$order->service_name} order has been cancelled and your wallet refunded.",
             'data'    => ['reference' => $order->reference],
         ]);
+    }
+
+    public function marketplaceOrderPlaced(MarketplaceOrder $order): void
+    {
+        $price       = '₦' . number_format($order->price_kobo / 100, 0);
+        $serviceName = $order->service->title ?? 'Unknown';
+        $buyerName   = $order->user->name ?? 'A buyer';
+
+        $adminIds = User::whereNotNull('admin_role')->pluck('id');
+
+        foreach ($adminIds as $adminId) {
+            Notification::create([
+                'user_id' => $adminId,
+                'type'    => 'marketplace_order',
+                'title'   => 'New Marketplace Order',
+                'body'    => "{$buyerName} ordered \"{$serviceName}\" for {$price}.",
+                'data'    => [
+                    'reference'    => $order->reference,
+                    'service_name' => $serviceName,
+                    'price_kobo'   => $order->price_kobo,
+                ],
+            ]);
+        }
     }
 
     /** Unread count for the navbar badge. */
