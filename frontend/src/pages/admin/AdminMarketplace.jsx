@@ -2,9 +2,12 @@ import { useEffect, useState, useCallback } from 'react'
 import { Link } from 'react-router-dom'
 import {
   Briefcase, Clock, Package, AlertCircle, ShoppingCart,
-  TrendingUp, AlertTriangle, ChevronRight
+  TrendingUp, AlertTriangle, ChevronRight, Plus, Trash2
 } from 'lucide-react'
 import adminApi from '../../services/adminApi'
+
+const PLATFORMS = ['facebook', 'instagram', 'twitter', 'tiktok', 'youtube', 'general']
+const PLATFORM_ICONS = { facebook: '📘', instagram: '📸', twitter: '🐦', tiktok: '🎵', youtube: '▶️', general: '🛒' }
 
 const spinStyle = {
   border: '3px solid #1E2736', borderTop: '3px solid #16A34A',
@@ -35,9 +38,17 @@ export default function AdminMarketplace() {
   const [vendorsLoading, setVendorsLoading] = useState(true)
   const [vendorsError, setVendorsError] = useState('')
 
-  const [services, setServices]       = useState([])
+  const [services, setServices]           = useState([])
   const [servicesLoading, setServicesLoading] = useState(true)
   const [servicesError, setServicesError] = useState('')
+
+  const [liveServices, setLiveServices]   = useState([])
+  const [liveLoading, setLiveLoading]     = useState(true)
+
+  const [categories, setCategories]   = useState([])
+  const [catLoading, setCatLoading]   = useState(true)
+  const [newCat, setNewCat]           = useState({ name: '', platform: 'general' })
+  const [catSaving, setCatSaving]     = useState(false)
 
   // Inline reject reason state: { id, type: 'vendor'|'service', value }
   const [rejectPrompt, setRejectPrompt] = useState(null)
@@ -70,7 +81,25 @@ export default function AdminMarketplace() {
     finally { setServicesLoading(false) }
   }, [])
 
-  useEffect(() => { loadStats(); loadVendors(); loadServices() }, [loadStats, loadVendors, loadServices])
+  const loadLiveServices = useCallback(async () => {
+    setLiveLoading(true)
+    try {
+      const { data } = await adminApi.get('/marketplace/services', { params: { status: 'approved', per_page: 50 } })
+      setLiveServices(data.services || data.data || [])
+    } catch {}
+    finally { setLiveLoading(false) }
+  }, [])
+
+  const loadCategories = useCallback(async () => {
+    setCatLoading(true)
+    try {
+      const { data } = await adminApi.get('/marketplace/categories')
+      setCategories(data.data || [])
+    } catch {}
+    finally { setCatLoading(false) }
+  }, [])
+
+  useEffect(() => { loadStats(); loadVendors(); loadServices(); loadCategories(); loadLiveServices() }, [loadStats, loadVendors, loadServices, loadCategories, loadLiveServices])
 
   function setLoading(key, val) {
     setActionLoading(prev => ({ ...prev, [key]: val }))
@@ -116,6 +145,33 @@ export default function AdminMarketplace() {
       await Promise.all([loadServices(), loadStats()])
     } catch (err) { alert(err.response?.data?.message || 'Action failed') }
     finally { setLoading(key, false) }
+  }
+
+  async function deleteService(id) {
+    if (!confirm('Permanently delete this approved service? This cannot be undone.')) return
+    try {
+      await adminApi.delete(`/marketplace/services/${id}`)
+      await Promise.all([loadLiveServices(), loadStats()])
+    } catch (err) { alert(err.response?.data?.message || 'Failed to delete service') }
+  }
+
+  async function createCategory() {
+    if (!newCat.name.trim()) return
+    setCatSaving(true)
+    try {
+      await adminApi.post('/marketplace/categories', newCat)
+      setNewCat({ name: '', platform: 'general' })
+      loadCategories()
+    } catch (err) { alert(err.response?.data?.message || 'Failed to create category') }
+    finally { setCatSaving(false) }
+  }
+
+  async function deleteCategory(id) {
+    if (!confirm('Delete this category?')) return
+    try {
+      await adminApi.delete(`/marketplace/categories/${id}`)
+      loadCategories()
+    } catch (err) { alert(err.response?.data?.message || 'Failed to delete') }
   }
 
   const statCards = stats ? [
@@ -317,6 +373,113 @@ export default function AdminMarketplace() {
             </div>
           )}
         </div>
+      </div>
+
+      {/* ── Live (Approved) Services ── */}
+      <div style={{ background: '#161B26', border: '1px solid #1E2736', borderRadius: 12, overflow: 'hidden', marginTop: 24 }}>
+        <div style={{ padding: '16px 20px', borderBottom: '1px solid #1E2736', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <h3 style={{ margin: 0, fontSize: 14, fontWeight: 600, color: '#E2E8F0' }}>Live Services</h3>
+          <span style={{ fontSize: 12, color: '#64748B' }}>{liveServices.length} approved</span>
+        </div>
+        {liveLoading ? (
+          <div style={{ display: 'flex', justifyContent: 'center', padding: 32 }}><div style={spinStyle} /></div>
+        ) : liveServices.length === 0 ? (
+          <div style={{ padding: 32, textAlign: 'center', color: '#64748B', fontSize: 13 }}>No approved services yet</div>
+        ) : (
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+              <thead>
+                <tr style={{ borderBottom: '1px solid #1E2736' }}>
+                  {['Service', 'Vendor', 'Platform', 'Price', 'Orders', ''].map(h => (
+                    <th key={h} style={{ padding: '10px 16px', textAlign: 'left', fontSize: 11, fontWeight: 600, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.05em', whiteSpace: 'nowrap' }}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {liveServices.map(s => {
+                  const platformColor = PLATFORM_COLORS[s.platform] || '#64748B'
+                  return (
+                    <tr key={s.id} style={{ borderBottom: '1px solid #1E2736' }}>
+                      <td style={{ padding: '11px 16px', maxWidth: 220 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                          {s.image_url
+                            ? <img src={s.image_url} alt="" style={{ width: 36, height: 36, objectFit: 'cover', borderRadius: 6, flexShrink: 0 }} />
+                            : <div style={{ width: 36, height: 36, background: platformColor + '1A', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, flexShrink: 0 }}>{PLATFORM_ICONS[s.platform] || '🛒'}</div>
+                          }
+                          <span style={{ color: '#E2E8F0', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.title}</span>
+                        </div>
+                      </td>
+                      <td style={{ padding: '11px 16px', color: '#94A3B8', whiteSpace: 'nowrap' }}>{s.vendor?.business_name || '—'}</td>
+                      <td style={{ padding: '11px 16px' }}>
+                        <span style={{ fontSize: 11, fontWeight: 600, color: platformColor, background: platformColor + '1A', border: `1px solid ${platformColor}33`, borderRadius: 4, padding: '2px 8px', textTransform: 'capitalize' }}>{s.platform || 'general'}</span>
+                      </td>
+                      <td style={{ padding: '11px 16px', color: '#4ADE80', fontWeight: 600, whiteSpace: 'nowrap' }}>{fmt(s.starting_price_kobo ?? 0)}</td>
+                      <td style={{ padding: '11px 16px', color: '#64748B' }}>{s.order_count ?? 0}</td>
+                      <td style={{ padding: '11px 16px' }}>
+                        <button
+                          onClick={() => deleteService(s.id)}
+                          style={{ padding: '5px 10px', border: '1px solid rgba(239,68,68,0.4)', borderRadius: 6, background: 'rgba(239,68,68,0.08)', color: '#EF4444', fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', gap: 4 }}>
+                          <Trash2 size={11} /> Delete
+                        </button>
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      {/* ── Categories ── */}
+      <div style={{ background: '#161B26', border: '1px solid #1E2736', borderRadius: 12, padding: 20, marginTop: 24 }}>
+        <h3 style={{ fontSize: 14, fontWeight: 700, color: '#E2E8F0', margin: '0 0 16px' }}>Service Categories</h3>
+
+        {/* Add form */}
+        <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
+          <input
+            value={newCat.name}
+            onChange={e => setNewCat(p => ({ ...p, name: e.target.value }))}
+            placeholder="Category name…"
+            onKeyDown={e => e.key === 'Enter' && createCategory()}
+            style={{ flex: '1 1 180px', padding: '7px 12px', background: '#0F1117', border: '1px solid #1E2736', borderRadius: 8, color: '#E2E8F0', fontSize: 13, fontFamily: 'inherit', outline: 'none' }}
+          />
+          <select
+            value={newCat.platform}
+            onChange={e => setNewCat(p => ({ ...p, platform: e.target.value }))}
+            style={{ flex: '0 1 140px', padding: '7px 12px', background: '#0F1117', border: '1px solid #1E2736', borderRadius: 8, color: '#E2E8F0', fontSize: 13, fontFamily: 'inherit', outline: 'none' }}>
+            {PLATFORMS.map(p => <option key={p} value={p}>{PLATFORM_ICONS[p]} {p.charAt(0).toUpperCase() + p.slice(1)}</option>)}
+          </select>
+          <button
+            onClick={createCategory}
+            disabled={!newCat.name.trim() || catSaving}
+            style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 16px', background: catSaving || !newCat.name.trim() ? '#1E2736' : 'linear-gradient(135deg,#16A34A,#15803D)', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 600, cursor: !newCat.name.trim() || catSaving ? 'not-allowed' : 'pointer', fontFamily: 'inherit', opacity: !newCat.name.trim() ? 0.5 : 1 }}>
+            <Plus size={14} /> {catSaving ? 'Adding…' : 'Add'}
+          </button>
+        </div>
+
+        {/* List */}
+        {catLoading ? (
+          <p style={{ fontSize: 13, color: '#64748B', margin: 0 }}>Loading…</p>
+        ) : categories.length === 0 ? (
+          <p style={{ fontSize: 13, color: '#64748B', margin: 0 }}>No categories yet. Add one above.</p>
+        ) : (
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+            {categories.map(cat => (
+              <div key={cat.id} style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#0F1117', border: '1px solid #1E2736', borderRadius: 8, padding: '6px 10px 6px 12px' }}>
+                <span style={{ fontSize: 13, color: '#E2E8F0', fontWeight: 500 }}>{cat.icon && `${cat.icon} `}{cat.name}</span>
+                <span style={{ fontSize: 11, color: '#475569', marginLeft: 2 }}>{cat.platform}</span>
+                <button
+                  onClick={() => deleteCategory(cat.id)}
+                  style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: '#475569', display: 'flex', padding: 2, marginLeft: 4 }}
+                  onMouseEnter={e => e.currentTarget.style.color = '#EF4444'}
+                  onMouseLeave={e => e.currentTarget.style.color = '#475569'}>
+                  <Trash2 size={12} />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   )

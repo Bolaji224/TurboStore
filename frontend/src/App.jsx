@@ -27,6 +27,7 @@ import MarketplaceOrders from './pages/dashboard/marketplace/MarketplaceOrders'
 import MarketplaceOrderDetail from './pages/dashboard/marketplace/MarketplaceOrderDetail'
 import VendorDashboard from './pages/dashboard/marketplace/VendorDashboard'
 import VendorApply from './pages/dashboard/marketplace/VendorApply'
+import EmailOtp from './pages/dashboard/EmailOtp'
 import AdminLayout from './components/admin/AdminLayout'
 import AdminRoute from './components/admin/AdminRoute'
 import AdminLogin from './pages/admin/AdminLogin'
@@ -42,6 +43,8 @@ import AdminSettings from './pages/admin/AdminSettings'
 import AdminMarketplace from './pages/admin/AdminMarketplace'
 import AdminMarketplaceVendors from './pages/admin/AdminMarketplaceVendors'
 import AdminMarketplaceServices from './pages/admin/AdminMarketplaceServices'
+import AdminMarketplaceOrders from './pages/admin/AdminMarketplaceOrders'
+import AdminMarketplaceDisputes from './pages/admin/AdminMarketplaceDisputes'
 import AdminMarketplacePayouts from './pages/admin/AdminMarketplacePayouts'
 import AdminSupplierReports from './pages/admin/AdminSupplierReports'
 import AdminLaunchCampaign from './pages/admin/AdminLaunchCampaign'
@@ -99,7 +102,11 @@ export default function App() {
                 <Route path="marketplace/orders" element={<MarketplaceOrders />} />
                 <Route path="marketplace/orders/:reference" element={<MarketplaceOrderDetail />} />
                 <Route path="marketplace/vendor" element={<VendorDashboard />} />
+                <Route path="marketplace/vendor/services" element={<VendorDashboard />} />
+                <Route path="marketplace/vendor/orders" element={<VendorDashboard />} />
+                <Route path="marketplace/vendor/earnings" element={<VendorDashboard />} />
                 <Route path="marketplace/vendor/apply" element={<VendorApply />} />
+                <Route path="email-otp" element={<EmailOtp />} />
               </Route>
 
               {/* Supplier portal */}
@@ -123,6 +130,8 @@ export default function App() {
                 <Route path="marketplace" element={<AdminMarketplace />} />
                 <Route path="marketplace/vendors" element={<AdminMarketplaceVendors />} />
                 <Route path="marketplace/services" element={<AdminMarketplaceServices />} />
+                <Route path="marketplace/orders" element={<AdminMarketplaceOrders />} />
+                <Route path="marketplace/disputes" element={<AdminMarketplaceDisputes />} />
                 <Route path="marketplace/payouts" element={<AdminMarketplacePayouts />} />
                 <Route path="marketplace/supplier-reports" element={<AdminSupplierReports />} />
               </Route>

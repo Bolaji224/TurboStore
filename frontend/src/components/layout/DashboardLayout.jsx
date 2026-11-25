@@ -3,10 +3,9 @@ import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom'
 import {
   LayoutDashboard, PhoneCall, ClipboardList, Wallet,
   Receipt, Key, User, Settings, LogOut, Menu, X, Bell,
-  Sun, Moon, Users, Gift, Shield, ChevronDown, HelpCircle, ShoppingBag
+  Users, Gift, Shield, ChevronDown, HelpCircle, ShoppingBag, Mail
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
-import { useTheme } from '../../context/ThemeContext'
 import api from '../../services/api'
 import Logo from '../shared/Logo'
 
@@ -17,9 +16,36 @@ const NOTIF_ICONS = {
   order_cancelled: '❌',
 }
 
-const navItems = [
+const consumerNavItems = [
   { section: 'Main', items: [
     { to: '/dashboard',            label: 'Dashboard',  icon: LayoutDashboard, end: true },
+    { to: '/dashboard/buy-number', label: 'Buy Number', icon: PhoneCall },
+    { to: '/dashboard/email-otp',  label: 'Email OTP',  icon: Mail },
+    { to: '/dashboard/orders',     label: 'My Orders',  icon: ClipboardList },
+    { to: '/dashboard/marketplace', label: 'Marketplace', icon: ShoppingBag, children: [
+      { to: '/dashboard/marketplace/orders', label: 'Orders', icon: ClipboardList },
+    ]},
+  ]},
+  { section: 'Wallet', items: [
+    { to: '/dashboard/wallet',       label: 'Wallet',       icon: Wallet },
+    { to: '/dashboard/transactions', label: 'Transactions', icon: Receipt },
+  ]},
+  { section: 'Rewards', items: [
+    { to: '/dashboard/referrals', label: 'Referrals', icon: Users },
+    { to: '/dashboard/rewards',   label: 'Rewards',   icon: Gift },
+  ]},
+  { section: 'Developer', items: [
+    { to: '/dashboard/api-keys', label: 'API Keys', icon: Key },
+  ]},
+  { section: 'Account', items: [
+    { to: '/dashboard/profile',  label: 'Profile',  icon: User },
+    { to: '/dashboard/security', label: 'Security', icon: Shield },
+    { to: '/dashboard/settings', label: 'Settings', icon: Settings },
+  ]},
+]
+
+const supplierNavItems = [
+  { section: 'Virtual Numbers', items: [
     { to: '/dashboard/buy-number', label: 'Buy Number', icon: PhoneCall },
     { to: '/dashboard/orders',     label: 'My Orders',  icon: ClipboardList },
   ]},
@@ -31,8 +57,8 @@ const navItems = [
     { to: '/dashboard/referrals', label: 'Referrals', icon: Users },
     { to: '/dashboard/rewards',   label: 'Rewards',   icon: Gift },
   ]},
-  { section: 'Marketplace', items: [
-    { to: '/dashboard/marketplace', label: 'Social Media Services', icon: ShoppingBag },
+  { section: 'Supplier', items: [
+    { to: '/dashboard/marketplace/vendor', label: 'Supplier Dashboard', icon: LayoutDashboard },
   ]},
   { section: 'Developer', items: [
     { to: '/dashboard/api-keys', label: 'API Keys', icon: Key },
@@ -45,18 +71,28 @@ const navItems = [
 ]
 
 const pageTitles = {
-  '/dashboard':              'Dashboard',
-  '/dashboard/buy-number':   'Buy Number',
-  '/dashboard/orders':       'My Orders',
-  '/dashboard/wallet':       'Wallet',
-  '/dashboard/transactions': 'Transactions',
-  '/dashboard/referrals':    'Referrals',
-  '/dashboard/rewards':      'Rewards',
-  '/dashboard/api-keys':     'API Keys',
-  '/dashboard/profile':      'Profile',
-  '/dashboard/security':     'Security',
-  '/dashboard/settings':     'Settings',
+  '/dashboard':                              'Dashboard',
+  '/dashboard/buy-number':                   'Buy Number',
+  '/dashboard/email-otp':                    'Email OTP',
+  '/dashboard/orders':                       'My Orders',
+  '/dashboard/wallet':                       'Wallet',
+  '/dashboard/transactions':                 'Transactions',
+  '/dashboard/referrals':                    'Referrals',
+  '/dashboard/rewards':                      'Rewards',
+  '/dashboard/api-keys':                     'API Keys',
+  '/dashboard/profile':                      'Profile',
+  '/dashboard/security':                     'Security',
+  '/dashboard/settings':                     'Settings',
+  '/dashboard/marketplace':                  'Marketplace',
+  '/dashboard/marketplace/orders':           'Marketplace Orders',
+  '/dashboard/marketplace/vendor':           'Supplier Dashboard',
+  '/dashboard/marketplace/vendor/services':  'My Services',
+  '/dashboard/marketplace/vendor/orders':    'Supplier Orders',
+  '/dashboard/marketplace/vendor/earnings':  'Earnings',
 }
+
+// Supplier-only routes — consumers cannot access these
+const SUPPLIER_ONLY = ['/dashboard/marketplace/vendor']
 
 
 function timeAgo(iso) {
@@ -70,15 +106,15 @@ function timeAgo(iso) {
 }
 
 export default function DashboardLayout() {
-  const [open, setOpen]             = useState(false)
-  const [mobile, setMobile]         = useState(window.innerWidth <= 768)
-  const [showNotifs, setShowNotifs] = useState(false)
-  const [showUser, setShowUser]     = useState(false)
+  const [open, setOpen]               = useState(false)
+  const [mobile, setMobile]           = useState(window.innerWidth <= 768)
+  const [showNotifs, setShowNotifs]   = useState(false)
+  const [showUser, setShowUser]       = useState(false)
+  const [openDropdowns, setOpenDropdowns] = useState(new Set())
   const [notifications, setNotifications] = useState([])
   const [unreadCount, setUnreadCount]     = useState(0)
   const [walletBalance, setWalletBalance] = useState(null)
   const { user, logout }        = useAuth()
-  const { isDark, toggle }      = useTheme()
   const navigate                = useNavigate()
   const location                = useLocation()
   const notifsRef               = useRef(null)
@@ -105,6 +141,16 @@ export default function DashboardLayout() {
   useEffect(() => {
     api.get('/wallet').then(r => setWalletBalance(r.data.balance_naira)).catch(() => {})
   }, [location.pathname])
+
+  // Route guard — block consumers from supplier-only routes
+  useEffect(() => {
+    if (!user) return
+    if (user.user_type !== 'supplier') {
+      const path = location.pathname
+      const isSupplierOnly = SUPPLIER_ONLY.some(r => path === r || path.startsWith(r + '/'))
+      if (isSupplierOnly) navigate('/dashboard', { replace: true })
+    }
+  }, [user, location.pathname])
 
   function openNotifs() {
     setShowNotifs(v => !v)
@@ -142,35 +188,90 @@ export default function DashboardLayout() {
 
   return (
     <>
-      <div className={`sidebar-overlay${open ? ' show' : ''}`} onClick={() => setOpen(false)} />
+      <div
+        className={`sidebar-overlay${open ? ' show' : ''}`}
+        onClick={() => setOpen(false)}
+      />
 
-      <aside className={`sidebar${open ? ' open' : ''}`}>
+      <aside
+        className={`sidebar${open ? ' open' : ''}`}
+      >
         <div style={{ padding: '20px 16px', borderBottom: '1px solid var(--border)' }}>
           <Logo />
         </div>
         <nav style={{ flex: 1, padding: 12, overflowY: 'auto' }}>
-          {navItems.map(group => (
+          {(user?.user_type === 'supplier' ? supplierNavItems : consumerNavItems).map(group => (
             <div key={group.section}>
               <div className="nav-section">{group.section}</div>
-              {group.items.map(item => (
-                <NavLink
-                  key={item.to + item.label}
-                  to={item.to}
-                  end={item.end}
-                  onClick={() => setOpen(false)}
-                  className={({ isActive }) =>
-                    `nav-item${isActive && item.to !== '#' ? ' active' : ''}`
-                  }
-                >
-                  <item.icon size={16} />
-                  {item.label}
-                </NavLink>
-              ))}
+              {group.items.map(item => {
+                if (item.children) {
+                  const autoOpen = location.pathname === item.to || location.pathname.startsWith(item.to + '/')
+                  const isOpen = autoOpen || openDropdowns.has(item.to)
+                  const toggleDd = () => setOpenDropdowns(prev => {
+                    const next = new Set(prev)
+                    if (next.has(item.to)) next.delete(item.to)
+                    else next.add(item.to)
+                    return next
+                  })
+                  return (
+                    <div key={item.to + item.label}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 0 }}>
+                        <NavLink
+                          to={item.to}
+                          end={item.end}
+                          onClick={() => setOpen(false)}
+                          className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}
+                          style={{ flex: 1, borderRadius: 8 }}
+                        >
+                          <item.icon size={16} />
+                          {item.label}
+                        </NavLink>
+                        <button
+                          onClick={toggleDd}
+                          style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '0 6px', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', height: 36, flexShrink: 0 }}>
+                          <ChevronDown size={12} style={{ transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }} />
+                        </button>
+                      </div>
+                      {isOpen && (
+                        <div style={{ paddingLeft: 10, borderLeft: '2px solid var(--border)', marginLeft: 14, marginTop: 2, marginBottom: 2 }}>
+                          {item.children.map(child => (
+                            <NavLink
+                              key={child.to}
+                              to={child.to}
+                              end={child.end}
+                              onClick={() => setOpen(false)}
+                              className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}
+                              style={{ fontSize: 13, padding: '7px 10px' }}
+                            >
+                              <child.icon size={14} />
+                              {child.label}
+                            </NavLink>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )
+                }
+                return (
+                  <NavLink
+                    key={item.to + item.label}
+                    to={item.to}
+                    end={item.end}
+                    onClick={() => setOpen(false)}
+                    className={({ isActive }) =>
+                      `nav-item${isActive && item.to !== '#' ? ' active' : ''}`
+                    }
+                  >
+                    <item.icon size={16} />
+                    {item.label}
+                  </NavLink>
+                )
+              })}
             </div>
           ))}
         </nav>
         <div style={{ padding: 12, borderTop: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: 2 }}>
-          <a href="#" className="nav-item">
+          <a href="https://t.me/Turbo_storess" target="_blank" rel="noopener noreferrer" className="nav-item">
             <HelpCircle size={16} /> Help & Support
           </a>
           <button onClick={handleLogout} className="nav-item" style={{ color: '#EF4444' }}>
@@ -197,15 +298,10 @@ export default function DashboardLayout() {
 
           {/* Right — actions */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            {/* Theme toggle */}
-            <button className="theme-toggle" onClick={toggle} title={isDark ? 'Switch to Light' : 'Switch to Dark'}>
-              {isDark ? <Sun size={16} color="#4ADE80" /> : <Moon size={16} color="#64748B" />}
-            </button>
-
             {/* Wallet balance chip */}
             {!mobile && (
               <button onClick={() => navigate('/dashboard/wallet')}
-                style={{ display: 'flex', alignItems: 'center', gap: 6, background: isDark ? 'rgba(22,163,74,0.15)' : '#F0FDF4', border: `1px solid ${isDark ? 'rgba(22,163,74,0.3)' : '#DCFCE7'}`, borderRadius: 8, padding: '6px 12px', cursor: 'pointer', fontFamily: 'inherit' }}>
+                style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'rgba(22,163,74,0.15)', border: '1px solid rgba(22,163,74,0.3)', borderRadius: 8, padding: '6px 12px', cursor: 'pointer', fontFamily: 'inherit' }}>
                 <Wallet size={13} color="#16A34A" />
                 <span style={{ fontSize: 13, fontWeight: 700, color: '#16A34A' }}>₦{Math.round(walletBalance ?? user?.wallet_naira ?? 0).toLocaleString()}</span>
               </button>
@@ -233,9 +329,9 @@ export default function DashboardLayout() {
                         No notifications yet
                       </div>
                     ) : notifications.map(n => (
-                      <div key={n.id} style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)', display: 'flex', gap: 10, alignItems: 'flex-start', background: n.unread ? (isDark ? 'rgba(22,163,74,0.06)' : '#F7FFF9') : 'transparent', cursor: 'default', transition: 'background .15s' }}
+                      <div key={n.id} style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)', display: 'flex', gap: 10, alignItems: 'flex-start', background: n.unread ? 'rgba(22,163,74,0.06)' : 'transparent', cursor: 'default', transition: 'background .15s' }}
                         onMouseEnter={e => e.currentTarget.style.background = 'var(--hover-bg)'}
-                        onMouseLeave={e => e.currentTarget.style.background = n.unread ? (isDark ? 'rgba(22,163,74,0.06)' : '#F7FFF9') : 'transparent'}>
+                        onMouseLeave={e => e.currentTarget.style.background = n.unread ? 'rgba(22,163,74,0.06)' : 'transparent'}>
                         <span style={{ fontSize: 20, lineHeight: 1 }}>{NOTIF_ICONS[n.type] ?? '🔔'}</span>
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
@@ -287,7 +383,7 @@ export default function DashboardLayout() {
                   <div style={{ borderTop: '1px solid var(--border)' }}>
                     <button onClick={handleLogout}
                       style={{ width: '100%', padding: '10px 14px', display: 'flex', alignItems: 'center', gap: 9, border: 'none', background: 'transparent', cursor: 'pointer', fontSize: 13, fontWeight: 500, color: '#EF4444', fontFamily: 'inherit', textAlign: 'left', transition: 'background .15s' }}
-                      onMouseEnter={e => e.currentTarget.style.background = isDark ? 'rgba(239,68,68,0.1)' : '#FEF2F2'}
+                      onMouseEnter={e => e.currentTarget.style.background = 'rgba(239,68,68,0.1)'}
                       onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
                       <LogOut size={14} color="#EF4444" /> Logout
                     </button>
@@ -302,6 +398,30 @@ export default function DashboardLayout() {
           <Outlet />
         </div>
       </div>
+
+      {/* Telegram support button */}
+      <a
+        href="https://t.me/+2349019679152"
+        target="_blank"
+        rel="noopener noreferrer"
+        title="Chat with support on Telegram"
+        style={{
+          position: 'fixed', bottom: 24, right: 24, zIndex: 999,
+          width: 52, height: 52, borderRadius: '50%',
+          background: '#229ED9',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          boxShadow: '0 4px 20px rgba(34,158,217,0.5)',
+          transition: 'transform .15s, box-shadow .15s',
+          textDecoration: 'none',
+        }}
+        onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.1)'; e.currentTarget.style.boxShadow = '0 6px 28px rgba(34,158,217,0.7)' }}
+        onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)';   e.currentTarget.style.boxShadow = '0 4px 20px rgba(34,158,217,0.5)' }}
+      >
+        {/* Telegram SVG icon */}
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg">
+          <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/>
+        </svg>
+      </a>
     </>
   )
 }

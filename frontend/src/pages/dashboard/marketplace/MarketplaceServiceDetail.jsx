@@ -75,7 +75,7 @@ export default function MarketplaceServiceDetail() {
 
   async function handleOrder() {
     if (!requirements.trim()) {
-      setOrderError('Please describe what you need.')
+      setOrderError('Please provide your transfer details so the seller can hand over the account.')
       return
     }
     setOrdering(true)
@@ -123,7 +123,7 @@ export default function MarketplaceServiceDetail() {
   const walletNaira    = Math.round(user?.wallet_naira ?? 0)
   const priceNaira     = Math.round((service.starting_price_kobo || 0) / 100)
 
-  const TABS = ['overview', 'requirements', 'reviews']
+  const TABS = ['overview', 'transfer info', 'reviews']
 
   return (
     <div>
@@ -148,10 +148,20 @@ export default function MarketplaceServiceDetail() {
 
         {/* LEFT COLUMN */}
         <div style={{ minWidth: 0 }}>
-          {/* Service image */}
+          {/* Service image(s) */}
           {service.image_url && (
-            <div style={{ width: '100%', borderRadius: 14, overflow: 'hidden', marginBottom: 20, border: '1px solid var(--border)' }}>
-              <img src={service.image_url} alt={service.title} style={{ width: '100%', maxHeight: 320, objectFit: 'cover', display: 'block' }} />
+            <div style={{ marginBottom: 20 }}>
+              <div style={{ width: '100%', borderRadius: 14, overflow: 'hidden', border: '1px solid var(--border)', marginBottom: service.extra_images?.length ? 10 : 0 }}>
+                <img src={service.image_url} alt={service.title} style={{ width: '100%', maxHeight: 320, objectFit: 'cover', display: 'block' }} />
+              </div>
+              {service.extra_images?.length > 0 && (
+                <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 4 }}>
+                  {service.extra_images.map((url, i) => (
+                    <img key={i} src={url} alt={`${service.title} ${i + 2}`}
+                      style={{ height: 80, minWidth: 100, objectFit: 'cover', borderRadius: 8, border: '1px solid var(--border)', flexShrink: 0 }} />
+                  ))}
+                </div>
+              )}
             </div>
           )}
 
@@ -242,12 +252,12 @@ export default function MarketplaceServiceDetail() {
               </div>
             )}
 
-            {activeTab === 'requirements' && (
+            {activeTab === 'transfer info' && (
               <div>
                 {service.requirements ? (
                   <p style={{ fontSize: 14, color: 'var(--text-muted)', lineHeight: 1.7, margin: 0 }}>{service.requirements}</p>
                 ) : (
-                  <p style={{ fontSize: 14, color: 'var(--text-muted)', margin: 0 }}>No specific requirements.</p>
+                  <p style={{ fontSize: 14, color: 'var(--text-muted)', margin: 0 }}>The seller will contact you after purchase to arrange the account transfer.</p>
                 )}
               </div>
             )}
@@ -286,12 +296,12 @@ export default function MarketplaceServiceDetail() {
 
             <div style={{ marginBottom: 16 }}>
               <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', display: 'block', marginBottom: 6 }}>
-                Your Requirements
+                Your Transfer Details
               </label>
               <textarea
                 className="input"
                 rows={5}
-                placeholder="Describe what you need (e.g. your username, target audience, post link…)"
+                placeholder="Provide the info the seller needs to transfer ownership to you (e.g. your email address, phone number, or preferred transfer method)"
                 value={requirements}
                 onChange={e => setRequirements(e.target.value)}
                 style={{ width: '100%', resize: 'vertical', fontFamily: 'inherit', lineHeight: 1.5 }}

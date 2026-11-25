@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react'
-import { Search, ChevronLeft, ChevronRight, XCircle, Eye } from 'lucide-react'
+import { Search, ChevronLeft, ChevronRight, XCircle, Eye, RefreshCw } from 'lucide-react'
 import adminApi from '../../services/adminApi'
 
 const STATUS_COLORS = {
@@ -28,6 +28,7 @@ export default function AdminOrders() {
   const [page, setPage]       = useState(1)
   const [selected, setSelected] = useState(null)
   const [cancelling, setCancelling] = useState(false)
+  const [syncing, setSyncing] = useState(false)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -41,6 +42,16 @@ export default function AdminOrders() {
   }, [page, search, status])
 
   useEffect(() => { load() }, [load])
+
+  async function syncOrder(order) {
+    setSyncing(true)
+    try {
+      const { data } = await adminApi.post(`/orders/${order.id}/sync`)
+      setOrders(prev => prev.map(o => o.id === order.id ? data.order : o))
+      setSelected(data.order)
+    } catch (err) { alert(err.response?.data?.message || 'Sync failed.') }
+    finally { setSyncing(false) }
+  }
 
   async function cancelOrder(order) {
     if (!window.confirm(`Cancel order ${order.reference}?`)) return
@@ -106,8 +117,11 @@ export default function AdminOrders() {
                     </td>
                     <td style={{ padding: '11px 14px', color: '#94A3B8', textTransform: 'capitalize', whiteSpace: 'nowrap' }}>{o.service_name}</td>
                     <td style={{ padding: '11px 14px', color: '#94A3B8', fontFamily: 'monospace', fontSize: 12 }}>{o.phone_number || '—'}</td>
-                    <td style={{ padding: '11px 14px', whiteSpace: 'nowrap' }}>
-                      <span style={{ color: STATUS_COLORS[o.status] ?? '#64748B', fontWeight: 600 }}>{o.status.replace(/_/g, ' ')}</span>
+                    <td style={{ padding: '11px 14px' }}>
+                      <span style={{ color: STATUS_COLORS[o.status] ?? '#64748B', fontWeight: 600, whiteSpace: 'nowrap' }}>{o.status.replace(/_/g, ' ')}</span>
+                      {['failed', 'expired'].includes(o.status) && o.failure_reason && (
+                        <p style={{ fontSize: 10, color: '#EF4444', margin: '2px 0 0', maxWidth: 180, lineHeight: 1.3 }}>{o.failure_reason}</p>
+                      )}
                     </td>
                     <td style={{ padding: '11px 14px', color: '#E2E8F0', fontWeight: 600, whiteSpace: 'nowrap' }}>{fmt(o.customer_price)}</td>
                     <td style={{ padding: '11px 14px', color: '#64748B', whiteSpace: 'nowrap' }}>{dateStr(o.created_at)}</td>
@@ -150,11 +164,12 @@ export default function AdminOrders() {
               {[
                 ['Reference',  selected.reference],
                 ['Status',     selected.status.replace(/_/g,' ')],
+                ...(selected.failure_reason ? [['Failure Reason', selected.failure_reason]] : []),
                 ['Provider',   selected.provider],
                 ['Service',    selected.service_name],
                 ['Country',    selected.country],
                 ['Phone',      selected.phone_number || '—'],
-                ['OTP',        selected.otp || '—'],
+                ['OTP Code',   selected.otp || (selected.status === 'waiting_for_otp' ? 'Waiting…' : '—')],
                 ['Price',      fmt(selected.customer_price)],
                 ['User',       selected.user?.email || '—'],
                 ['Created',    dateStr(selected.created_at)],
@@ -165,9 +180,16 @@ export default function AdminOrders() {
                   <span style={{ fontSize: 12, color: '#E2E8F0', fontWeight: 600, textAlign: 'right', maxWidth: '55%', wordBreak: 'break-all' }}>{val}</span>
                 </div>
               ))}
+              {!selected.otp && !['completed', 'failed', 'cancelled', 'refunded'].includes(selected.status) && (
+                <button onClick={() => syncOrder(selected)} disabled={syncing}
+                  style={{ width: '100%', marginTop: 14, padding: '9px', border: '1px solid rgba(99,102,241,0.3)', borderRadius: 8, background: 'rgba(99,102,241,0.08)', color: '#818CF8', fontSize: 13, fontWeight: 600, cursor: syncing ? 'not-allowed' : 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+                  <RefreshCw size={14} style={syncing ? { animation: 'spin 0.8s linear infinite' } : {}} />
+                  {syncing ? 'Syncing…' : 'Sync Status from Provider'}
+                </button>
+              )}
               {['processing', 'waiting_for_otp'].includes(selected.status) && (
                 <button onClick={() => cancelOrder(selected)} disabled={cancelling}
-                  style={{ width: '100%', marginTop: 14, padding: '9px', border: '1px solid rgba(239,68,68,0.3)', borderRadius: 8, background: 'rgba(239,68,68,0.08)', color: '#EF4444', fontSize: 13, fontWeight: 600, cursor: cancelling ? 'not-allowed' : 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+                  style={{ width: '100%', marginTop: 8, padding: '9px', border: '1px solid rgba(239,68,68,0.3)', borderRadius: 8, background: 'rgba(239,68,68,0.08)', color: '#EF4444', fontSize: 13, fontWeight: 600, cursor: cancelling ? 'not-allowed' : 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
                   <XCircle size={14} /> {cancelling ? 'Cancelling…' : 'Cancel Order'}
                 </button>
               )}

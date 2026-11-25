@@ -1,11 +1,12 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom'
 import {
   LayoutDashboard, Users, ShoppingCart, Wallet, Receipt,
   Settings, LogOut, Menu, X, Shield, ChevronDown, Bell,
-  BarChart3, Gift, Boxes, Store, Briefcase, Package, CreditCard, PieChart, Rocket
+  BarChart3, Gift, Boxes, Store, Briefcase, Package, CreditCard, PieChart, Rocket, AlertOctagon
 } from 'lucide-react'
 import { useAdminAuth } from '../../context/AdminAuthContext'
+import adminApi from '../../services/adminApi'
 
 const NAV = [
   { section: 'Overview', items: [
@@ -30,6 +31,7 @@ const NAV = [
     { to: '/admin/marketplace/services',         label: 'Services',         icon: Package },
     { to: '/admin/marketplace/payouts',          label: 'Supplier Payouts', icon: CreditCard },
     { to: '/admin/marketplace/supplier-reports', label: 'Supplier Reports', icon: PieChart },
+    { to: '/admin/marketplace/disputes',         label: 'Disputes',         icon: AlertOctagon },
   ]},
   { section: 'System', items: [
     { to: '/admin/providers', label: 'Providers', icon: Boxes },
@@ -53,16 +55,59 @@ const PAGE_TITLES = {
   '/admin/marketplace/services':          'Marketplace Services',
   '/admin/marketplace/payouts':           'Supplier Payouts',
   '/admin/marketplace/supplier-reports':  'Supplier Reports',
+  '/admin/marketplace/disputes':          'Marketplace Disputes',
 }
 
 export default function AdminLayout() {
-  const [sidebarOpen, setSidebarOpen] = useState(false)
-  const [isMobile, setIsMobile]       = useState(window.innerWidth <= 768)
-  const { admin, logout }             = useAdminAuth()
-  const navigate                      = useNavigate()
-  const location                      = useLocation()
+  const [sidebarOpen, setSidebarOpen]   = useState(false)
+  const [isMobile, setIsMobile]         = useState(window.innerWidth <= 768)
+  const { admin, logout }               = useAdminAuth()
+  const navigate                        = useNavigate()
+  const location                        = useLocation()
+  const [notifs, setNotifs]             = useState([])
+  const [unread, setUnread]             = useState(0)
+  const [showNotifs, setShowNotifs]     = useState(false)
+  const notifRef                        = useRef(null)
 
   const pageTitle = PAGE_TITLES[location.pathname] ?? 'Admin'
+
+  const fetchNotifs = useCallback(async () => {
+    try {
+      const r = await adminApi.get('/notifications')
+      setNotifs(r.data.notifications || [])
+      setUnread(r.data.unread_count || 0)
+    } catch {}
+  }, [])
+
+  useEffect(() => {
+    fetchNotifs()
+    const id = setInterval(fetchNotifs, 30000)
+    return () => clearInterval(id)
+  }, [fetchNotifs])
+
+  useEffect(() => {
+    function onClickOutside(e) {
+      if (notifRef.current && !notifRef.current.contains(e.target)) setShowNotifs(false)
+    }
+    document.addEventListener('mousedown', onClickOutside)
+    return () => document.removeEventListener('mousedown', onClickOutside)
+  }, [])
+
+  async function markAllRead() {
+    try {
+      await adminApi.post('/notifications/read-all')
+      setUnread(0)
+      setNotifs(n => n.map(x => ({ ...x, unread: false })))
+    } catch {}
+  }
+
+  function timeAgo(iso) {
+    const diff = Math.floor((Date.now() - new Date(iso)) / 1000)
+    if (diff < 60)   return `${diff}s ago`
+    if (diff < 3600) return `${Math.floor(diff / 60)}m ago`
+    if (diff < 86400)return `${Math.floor(diff / 3600)}h ago`
+    return `${Math.floor(diff / 86400)}d ago`
+  }
 
   useEffect(() => {
     const fn = () => setIsMobile(window.innerWidth <= 768)
@@ -164,7 +209,52 @@ export default function AdminLayout() {
             )}
             <h1 style={{ fontSize: 16, fontWeight: 700, color: '#E2E8F0', margin: 0 }}>{pageTitle}</h1>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            {/* Notification bell */}
+            <div ref={notifRef} style={{ position: 'relative' }}>
+              <button
+                onClick={() => { setShowNotifs(o => !o); if (!showNotifs && unread > 0) markAllRead() }}
+                style={{ position: 'relative', border: 'none', background: 'transparent', cursor: 'pointer', color: '#94A3B8', display: 'flex', alignItems: 'center', padding: 6, borderRadius: 8, transition: 'background .15s' }}
+                onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.06)'}
+                onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+              >
+                <Bell size={18} />
+                {unread > 0 && (
+                  <span style={{ position: 'absolute', top: 2, right: 2, width: 16, height: 16, background: '#EF4444', borderRadius: '50%', fontSize: 9, fontWeight: 700, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    {unread > 9 ? '9+' : unread}
+                  </span>
+                )}
+              </button>
+
+              {showNotifs && (
+                <div style={{ position: 'absolute', right: 0, top: 'calc(100% + 10px)', width: 320, background: '#161B26', border: '1px solid #1E2736', borderRadius: 12, boxShadow: '0 12px 40px rgba(0,0,0,0.4)', zIndex: 200, overflow: 'hidden' }}>
+                  <div style={{ padding: '12px 16px', borderBottom: '1px solid #1E2736', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontSize: 13, fontWeight: 700, color: '#E2E8F0' }}>Notifications</span>
+                    {unread > 0 && (
+                      <button onClick={markAllRead} style={{ fontSize: 11, color: '#4ADE80', border: 'none', background: 'transparent', cursor: 'pointer', fontFamily: 'inherit' }}>
+                        Mark all read
+                      </button>
+                    )}
+                  </div>
+                  <div style={{ maxHeight: 360, overflowY: 'auto' }}>
+                    {notifs.length === 0 ? (
+                      <p style={{ fontSize: 13, color: '#64748B', textAlign: 'center', padding: '24px 16px', margin: 0 }}>No notifications yet</p>
+                    ) : notifs.map(n => (
+                      <div key={n.id} style={{ padding: '12px 16px', borderBottom: '1px solid #1E2736', background: n.unread ? 'rgba(74,222,128,0.04)' : 'transparent', cursor: 'default' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
+                          <div style={{ flex: 1 }}>
+                            <p style={{ fontSize: 12, fontWeight: 700, color: n.unread ? '#4ADE80' : '#94A3B8', margin: '0 0 3px' }}>{n.title}</p>
+                            <p style={{ fontSize: 12, color: '#64748B', margin: 0, lineHeight: 1.4 }}>{n.body}</p>
+                          </div>
+                          <span style={{ fontSize: 10, color: '#475569', flexShrink: 0 }}>{timeAgo(n.created_at)}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
             <div style={{ padding: '4px 10px', background: 'rgba(74,222,128,0.1)', border: '1px solid rgba(74,222,128,0.2)', borderRadius: 6, fontSize: 11, color: '#4ADE80', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
               {admin?.admin_role?.replace('_', ' ')}
             </div>

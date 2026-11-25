@@ -7,8 +7,17 @@ import api from '../../services/api'
 
 const CATEGORIES = ['All', 'Social', 'AI Apps', 'Finance', 'Shopping', 'Gaming']
 
+// Maps common abbreviations → the actual 5sim country code
+const COUNTRY_ALIASES = {
+  'uk':  'england',
+  'gb':  'england',
+  'usa': 'usa',
+  'ksa': 'saudiarabia',
+  'rsa': 'southafrica',
+}
+
 const PINNED = [
-  'whatsapp', 'telegram', 'tiktok', 'instagram', 'twitter',
+  'whatsapp', 'telegram', 'signal', 'tiktok', 'instagram', 'twitter',
   'facebook', 'google', 'discord', 'snapchat', 'linkedin',
 ]
 
@@ -16,6 +25,7 @@ const PINNED = [
 const SERVICE_META = {
   whatsapp:  { category: 'Social',   color: '#25D366', name: 'WhatsApp' },
   telegram:  { category: 'Social',   color: '#2CA5E0', name: 'Telegram' },
+  signal:    { category: 'Social',   color: '#3A76F0', name: 'Signal' },
   google:    { category: 'Social',   color: '#4285F4', name: 'Google / Gmail' },
   instagram: { category: 'Social',   color: '#E1306C', name: 'Instagram' },
   tiktok:    { category: 'Shopping', color: '#010101', name: 'TikTok' },
@@ -67,7 +77,9 @@ function ConfirmModal({ service, country, livePrice, loadingPrice, onConfirm, on
     try {
       await onConfirm()
     } catch (e) {
-      setError(e.response?.data?.message || e.message || 'Purchase failed. Please try again.')
+      const raw = e.response?.data?.message || e.message || ''
+      const isWalletError = raw.toLowerCase().includes('wallet') || raw.toLowerCase().includes('balance')
+      setError(isWalletError ? raw : 'This network is currently unavailable. Please try a different country or try again later.')
       setOrdering(false)
     }
   }
@@ -171,6 +183,7 @@ export default function BuyNumber() {
   const [search, setSearch]             = useState('')
   const [category, setCategory]         = useState('All')
   const [showCountry, setShowCountry]   = useState(false)
+  const [countrySearch, setCountrySearch] = useState('')
   const [selected, setSelected]         = useState(null)
   const [confirm, setConfirm]           = useState(false)
   const [livePrice, setLivePrice]       = useState(null)
@@ -296,15 +309,36 @@ export default function BuyNumber() {
             <span style={{ fontSize: 10, color: colors.textMuted }}>▼</span>
           </button>
           {showCountry && countries.length > 0 && (
-            <div style={{ position: 'absolute', top: '110%', left: 0, background: colors.cardBg, border: `1px solid ${colors.border}`, borderRadius: 14, padding: 8, zIndex: 50, boxShadow: '0 16px 48px rgba(0,0,0,0.18)', minWidth: 240, maxHeight: 320, overflowY: 'auto' }}>
-              {countries.map(c => (
-                <button key={c.code} onClick={() => { setCountry(c); setShowCountry(false) }}
-                  style={{ width: '100%', padding: '9px 14px', display: 'flex', alignItems: 'center', gap: 10, border: 'none', background: country?.code === c.code ? colors.hoverBg : 'transparent', borderRadius: 8, cursor: 'pointer', fontFamily: 'inherit' }}>
-                  <span style={{ fontSize: 13, fontWeight: 600, color: colors.text }}>{c.name}</span>
-                  <span style={{ fontSize: 12, color: colors.textMuted, marginLeft: 'auto' }}>{c.iso || c.code}</span>
-                  {country?.code === c.code && <Check size={13} color="#16A34A" />}
-                </button>
-              ))}
+            <div style={{ position: 'absolute', top: '110%', left: 0, background: colors.cardBg, border: `1px solid ${colors.border}`, borderRadius: 14, padding: 8, zIndex: 50, boxShadow: '0 16px 48px rgba(0,0,0,0.18)', minWidth: 260 }}>
+              <div style={{ padding: '4px 6px 8px' }}>
+                <input
+                  autoFocus
+                  placeholder="Search country…"
+                  value={countrySearch}
+                  onChange={e => setCountrySearch(e.target.value)}
+                  style={{ width: '100%', padding: '7px 10px', borderRadius: 8, border: `1px solid ${colors.border}`, background: colors.inputBg, color: colors.text, fontSize: 13, fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box' }}
+                />
+              </div>
+              <div style={{ maxHeight: 280, overflowY: 'auto' }}>
+                {countries
+                  .filter(c => {
+                    const q = countrySearch.toLowerCase()
+                    if (!q) return true
+                    const resolvedCode = COUNTRY_ALIASES[q]
+                    return c.name.toLowerCase().includes(q)
+                      || (c.iso || '').toLowerCase().includes(q)
+                      || c.code.toLowerCase().includes(q)
+                      || (resolvedCode && c.code.toLowerCase() === resolvedCode)
+                  })
+                  .map(c => (
+                    <button key={c.code} onClick={() => { setCountry(c); setShowCountry(false); setCountrySearch('') }}
+                      style={{ width: '100%', padding: '9px 14px', display: 'flex', alignItems: 'center', gap: 10, border: 'none', background: country?.code === c.code ? colors.hoverBg : 'transparent', borderRadius: 8, cursor: 'pointer', fontFamily: 'inherit' }}>
+                      <span style={{ fontSize: 13, fontWeight: 600, color: colors.text }}>{c.name}</span>
+                      <span style={{ fontSize: 12, color: colors.textMuted, marginLeft: 'auto' }}>{c.iso || c.code}</span>
+                      {country?.code === c.code && <Check size={13} color="#16A34A" />}
+                    </button>
+                  ))}
+              </div>
             </div>
           )}
         </div>

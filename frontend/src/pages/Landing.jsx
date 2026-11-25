@@ -3,9 +3,8 @@ import { Link } from 'react-router-dom'
 import {
   Shield, Globe, Zap, Code, ArrowRight,
   ChevronDown, ChevronUp, Check, Wallet, Phone,
-  RefreshCw, Star, Users, TrendingUp, Sun, Moon, Lock, Activity
+  RefreshCw, Star, Users, TrendingUp, Lock, Activity
 } from 'lucide-react'
-import { useTheme } from '../context/ThemeContext'
 
 /* ── Data ──────────────────────────────────────────────────── */
 const ROTATING_WORDS = ['WhatsApp', 'Google', 'Telegram', 'Instagram', 'TikTok', 'Discord']
@@ -134,33 +133,33 @@ export default function Landing() {
   const [openFaq, setOpenFaq] = useState(null)
   const [wordIdx, setWordIdx] = useState(0)
   const [wordVisible, setWordVisible] = useState(true)
-  const { isDark, toggle } = useTheme()
 
-  /* ── Theme palette ── */
-  const bg      = isDark ? '#030C06'                  : '#ffffff'
-  const bgAlt   = isDark ? '#040F08'                  : '#F8FAF9'
-  const bgAlt2  = isDark ? '#08130A'                  : '#F0FDF4'
-  const navBg   = isDark ? 'rgba(3,12,6,0.82)'        : 'rgba(255,255,255,0.95)'
-  const navBdr  = isDark ? 'rgba(74,222,128,0.1)'     : 'rgba(22,163,74,0.18)'
-  const h1      = isDark ? '#fff'                     : '#0F172A'
-  const body    = isDark ? 'rgba(255,255,255,0.52)'   : '#64748B'
-  const muted   = isDark ? 'rgba(255,255,255,0.38)'   : '#94A3B8'
-  const cardBg  = isDark ? 'rgba(255,255,255,0.028)'  : '#ffffff'
-  const cardBdr = isDark ? 'rgba(255,255,255,0.07)'   : 'rgba(22,163,74,0.14)'
-  const itemBg  = isDark ? 'rgba(255,255,255,0.03)'   : 'rgba(22,163,74,0.04)'
-  const itemBdr = isDark ? 'rgba(255,255,255,0.07)'   : 'rgba(22,163,74,0.12)'
-  const secBdr  = isDark ? 'rgba(255,255,255,0.04)'   : 'rgba(22,163,74,0.1)'
-  const lgnTxt  = isDark ? 'rgba(255,255,255,0.55)'   : '#475569'
-  const lgnBdr  = isDark ? 'rgba(255,255,255,0.1)'    : '#E2E8F0'
-  const tglBg   = isDark ? 'rgba(255,255,255,0.08)'   : 'rgba(22,163,74,0.06)'
-  const tglBdr  = isDark ? 'rgba(255,255,255,0.12)'   : 'rgba(22,163,74,0.22)'
-  const tglClr  = isDark ? '#fff'                     : '#16A34A'
-  const statBdr = isDark ? 'rgba(255,255,255,0.07)'   : 'rgba(22,163,74,0.12)'
-  const faqBg   = isDark ? 'rgba(255,255,255,0.025)'  : '#ffffff'
-  const faqBdr  = isDark ? 'rgba(255,255,255,0.07)'   : 'rgba(22,163,74,0.12)'
-  const codeBg  = isDark ? '#080F0A'                  : '#F8FAF9'
-  const codeHdr = isDark ? 'rgba(255,255,255,0.03)'   : '#F0FDF4'
-  const cardShadow = isDark ? 'none' : '0 2px 16px rgba(22,163,74,0.08)'
+  /* ── Dark-only palette ── */
+  const bg      = '#030C06'
+  const bgAlt   = '#040F08'
+  const bgAlt2  = '#08130A'
+  const navBg   = 'rgba(3,12,6,0.82)'
+  const navBdr  = 'rgba(74,222,128,0.1)'
+  const h1      = '#fff'
+  const body    = 'rgba(255,255,255,0.52)'
+  const muted   = 'rgba(255,255,255,0.38)'
+  const cardBg  = 'rgba(255,255,255,0.028)'
+  const cardBdr = 'rgba(255,255,255,0.07)'
+  const itemBg  = 'rgba(255,255,255,0.03)'
+  const itemBdr = 'rgba(255,255,255,0.07)'
+  const secBdr  = 'rgba(255,255,255,0.04)'
+  const lgnTxt  = 'rgba(255,255,255,0.55)'
+  const lgnBdr  = 'rgba(255,255,255,0.1)'
+  const tglBg   = 'rgba(255,255,255,0.08)'
+  const tglBdr  = 'rgba(255,255,255,0.12)'
+  const tglClr  = '#fff'
+  const statBdr = 'rgba(255,255,255,0.07)'
+  const faqBg   = 'rgba(255,255,255,0.025)'
+  const faqBdr  = 'rgba(255,255,255,0.07)'
+  const codeBg  = '#080F0A'
+  const codeHdr = 'rgba(255,255,255,0.03)'
+  const cardShadow = 'none'
+  const isDark  = true
 
   /* ── Scroll-reveal ── */
   useEffect(() => {
@@ -201,44 +200,49 @@ export default function Landing() {
             <img src="/logo.png" alt="TurboStore" style={{ height: 36, objectFit: 'contain' }} />
           </Link>
 
-          <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexShrink: 0 }}>
-            {/* Telegram */}
-            <a id="nav-telegram" href="#" target="_blank" rel="noopener noreferrer"
-              style={{ width: 38, height: 38, borderRadius: 9, border: `1px solid ${tglBdr}`, background: tglBg, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: tglClr, transition: 'all 0.2s', flexShrink: 0, textDecoration: 'none' }}
-              onMouseEnter={e => { e.currentTarget.style.borderColor = '#29B6F6'; e.currentTarget.style.color = '#29B6F6'; }}
-              onMouseLeave={e => { e.currentTarget.style.borderColor = tglBdr; e.currentTarget.style.color = tglClr; }}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M21.5 2L2 9.5l7 2.5 2.5 7 3.5-4 5 4 1.5-17z"/>
-                <path d="M9 12l9-7"/>
-              </svg>
-            </a>
+          <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+            {/* Social icons — hidden on small screens */}
+            <div id="nav-socials" style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+              {/* Telegram */}
+              <a href="#" target="_blank" rel="noopener noreferrer"
+                style={{ width: 38, height: 38, borderRadius: 9, border: `1px solid ${tglBdr}`, background: tglBg, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: tglClr, transition: 'all 0.2s', flexShrink: 0, textDecoration: 'none' }}
+                onMouseEnter={e => { e.currentTarget.style.borderColor = '#29B6F6'; e.currentTarget.style.color = '#29B6F6'; }}
+                onMouseLeave={e => { e.currentTarget.style.borderColor = tglBdr; e.currentTarget.style.color = tglClr; }}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21.5 2L2 9.5l7 2.5 2.5 7 3.5-4 5 4 1.5-17z"/>
+                  <path d="M9 12l9-7"/>
+                </svg>
+              </a>
 
-            {/* X (Twitter) */}
-            <a id="nav-twitter" href="#" target="_blank" rel="noopener noreferrer"
-              style={{ width: 38, height: 38, borderRadius: 9, border: `1px solid ${tglBdr}`, background: tglBg, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: tglClr, transition: 'all 0.2s', flexShrink: 0, textDecoration: 'none' }}
-              onMouseEnter={e => { e.currentTarget.style.borderColor = isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)'; e.currentTarget.style.color = isDark ? '#fff' : '#000'; }}
-              onMouseLeave={e => { e.currentTarget.style.borderColor = tglBdr; e.currentTarget.style.color = tglClr; }}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.73-8.835L1.254 2.25H8.08l4.253 5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
-              </svg>
-            </a>
+              {/* TikTok */}
+              <a href="https://www.tiktok.com/@turbo_stores?is_from_webapp=1&sender_device=pc" target="_blank" rel="noopener noreferrer"
+                style={{ width: 38, height: 38, borderRadius: 9, border: `1px solid ${tglBdr}`, background: tglBg, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: tglClr, transition: 'all 0.2s', flexShrink: 0, textDecoration: 'none' }}
+                onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.5)'; e.currentTarget.style.color = '#fff'; }}
+                onMouseLeave={e => { e.currentTarget.style.borderColor = tglBdr; e.currentTarget.style.color = tglClr; }}>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V8.69a8.24 8.24 0 0 0 4.82 1.54V6.78a4.85 4.85 0 0 1-1.05-.09z"/>
+                </svg>
+              </a>
 
-            {/* Theme toggle */}
-            <button onClick={toggle}
-              style={{ width: 38, height: 38, borderRadius: 9, border: `1px solid ${tglBdr}`, background: tglBg, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: tglClr, transition: 'all 0.2s', flexShrink: 0 }}
-              onMouseEnter={e => { e.currentTarget.style.borderColor = isDark ? 'rgba(255,255,255,0.28)' : 'rgba(22,163,74,0.45)'; }}
-              onMouseLeave={e => { e.currentTarget.style.borderColor = tglBdr; }}>
-              {isDark ? <Sun size={16} /> : <Moon size={16} />}
-            </button>
+              {/* X (Twitter) */}
+              <a href="#" target="_blank" rel="noopener noreferrer"
+                style={{ width: 38, height: 38, borderRadius: 9, border: `1px solid ${tglBdr}`, background: tglBg, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: tglClr, transition: 'all 0.2s', flexShrink: 0, textDecoration: 'none' }}
+                onMouseEnter={e => { e.currentTarget.style.borderColor = isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)'; e.currentTarget.style.color = isDark ? '#fff' : '#000'; }}
+                onMouseLeave={e => { e.currentTarget.style.borderColor = tglBdr; e.currentTarget.style.color = tglClr; }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.73-8.835L1.254 2.25H8.08l4.253 5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                </svg>
+              </a>
+            </div>
 
             <Link id="nav-sell" to="/supplier/register"
-              style={{ fontSize: 14, fontWeight: 600, color: isDark ? '#4ADE80' : '#16A34A', textDecoration: 'none', padding: '8px 4px', borderRadius: 9, transition: 'opacity 0.2s' }}
+              style={{ fontSize: 14, fontWeight: 600, color: isDark ? '#4ADE80' : '#16A34A', textDecoration: 'none', padding: '8px 4px', borderRadius: 9, transition: 'opacity 0.2s', whiteSpace: 'nowrap' }}
               onMouseEnter={e => e.currentTarget.style.opacity = '0.7'}
               onMouseLeave={e => e.currentTarget.style.opacity = '1'}>
               Sell on Turbostore
             </Link>
             <Link to="/login"
-              style={{ fontSize: 14, fontWeight: 600, color: lgnTxt, textDecoration: 'none', padding: '8px 18px', borderRadius: 9, border: `1px solid ${lgnBdr}`, transition: 'all 0.2s' }}
+              style={{ fontSize: 14, fontWeight: 600, color: lgnTxt, textDecoration: 'none', padding: '8px 18px', borderRadius: 9, border: `1px solid ${lgnBdr}`, transition: 'all 0.2s', whiteSpace: 'nowrap', flexShrink: 0 }}
               onMouseEnter={e => { e.currentTarget.style.color = isDark ? '#fff' : '#16A34A'; e.currentTarget.style.borderColor = isDark ? 'rgba(255,255,255,0.22)' : '#16A34A'; }}
               onMouseLeave={e => { e.currentTarget.style.color = lgnTxt; e.currentTarget.style.borderColor = lgnBdr; }}>
               Login
@@ -314,7 +318,7 @@ export default function Landing() {
             </div>
 
             {/* Stats */}
-            <div className="fade-up-4" style={{ display: 'flex', gap: 0, paddingTop: 28, borderTop: `1px solid ${statBdr}`, transition: 'border-color 0.3s' }}>
+            <div id="hero-stats" className="fade-up-4" style={{ display: 'flex', gap: 0, paddingTop: 28, borderTop: `1px solid ${statBdr}`, transition: 'border-color 0.3s' }}>
               {STATS.map((s, i) => (
                 <div key={s.label} style={{ flex: 1, paddingRight: i < STATS.length - 1 ? 24 : 0, borderRight: i < STATS.length - 1 ? `1px solid ${statBdr}` : 'none', paddingLeft: i > 0 ? 24 : 0 }}>
                   <div style={{ fontSize: 28, fontWeight: 900, color: '#16A34A', letterSpacing: '-1px', lineHeight: 1.1 }}>
@@ -377,7 +381,7 @@ export default function Landing() {
 
       {/* ══════════════ TRUST BAR ══════════════ */}
       <div style={{ background: bgAlt, borderTop: `1px solid ${secBdr}`, borderBottom: `1px solid ${secBdr}`, padding: '28px 24px', transition: 'background 0.3s, border-color 0.3s' }}>
-        <div style={{ maxWidth: 1000, margin: '0 auto', display: 'flex', alignItems: 'center', gap: 0, flexWrap: 'wrap', justifyContent: 'center' }}>
+        <div id="trust-bar-inner" style={{ maxWidth: 1000, margin: '0 auto', display: 'flex', alignItems: 'center', gap: 0, flexWrap: 'wrap', justifyContent: 'center' }}>
           <span style={{ fontSize: 11.5, fontWeight: 600, color: muted, letterSpacing: '.08em', marginRight: 36, whiteSpace: 'nowrap', transition: 'color 0.3s' }}>WORKS WITH</span>
           {[
             { name: 'WhatsApp', color: '#25D366' },
@@ -451,7 +455,7 @@ export default function Landing() {
             <p style={{ fontSize: 16, color: muted, margin: 0, transition: 'color 0.3s' }}>No complicated setup. No long forms. Just results.</p>
           </div>
           <div id="steps-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, position: 'relative' }}>
-            <div style={{ position: 'absolute', top: 47, left: '14%', right: '14%', height: 1, borderTop: '1.5px dashed rgba(22,163,74,0.25)', zIndex: 0, pointerEvents: 'none' }} />
+            <div id="steps-line" style={{ position: 'absolute', top: 47, left: '14%', right: '14%', height: 1, borderTop: '1.5px dashed rgba(22,163,74,0.25)', zIndex: 0, pointerEvents: 'none' }} />
             {STEPS.map((s, i) => (
               <div key={s.n} data-reveal data-delay={String(i + 1)}
                 style={{ background: cardBg, border: `1px solid ${i === 0 ? 'rgba(22,163,74,0.35)' : cardBdr}`, borderRadius: 22, padding: '28px 22px', textAlign: 'center', position: 'relative', zIndex: 1, boxShadow: cardShadow, transition: 'all 0.3s' }}
@@ -480,7 +484,7 @@ export default function Landing() {
       </section>
 
       {/* ══════════════ COUNTRIES MARQUEE ══════════════ */}
-      <section style={{ background: bg, padding: '110px 24px', borderTop: `1px solid ${secBdr}`, transition: 'background 0.3s' }}>
+      <section id="countries" style={{ background: bg, padding: '110px 24px', borderTop: `1px solid ${secBdr}`, transition: 'background 0.3s' }}>
         <div data-reveal style={{ maxWidth: 1140, margin: '0 auto', textAlign: 'center', marginBottom: 56 }}>
           <SectionBadge>GLOBAL COVERAGE</SectionBadge>
           <h2 style={{ fontSize: 'clamp(30px, 4vw, 54px)', fontWeight: 900, color: h1, margin: '0 0 14px', letterSpacing: '-1.5px', lineHeight: 1.1, transition: 'color 0.3s' }}>
@@ -519,7 +523,7 @@ export default function Landing() {
       </section>
 
       {/* ══════════════ TESTIMONIALS ══════════════ */}
-      <section style={{ background: bgAlt, padding: '110px 24px', borderTop: `1px solid ${secBdr}`, transition: 'background 0.3s' }}>
+      <section id="testimonials" style={{ background: bgAlt, padding: '110px 24px', borderTop: `1px solid ${secBdr}`, transition: 'background 0.3s' }}>
         <div style={{ maxWidth: 1140, margin: '0 auto' }}>
           <div data-reveal style={{ textAlign: 'center', marginBottom: 64 }}>
             <SectionBadge>WHAT PEOPLE SAY</SectionBadge>
@@ -578,7 +582,7 @@ export default function Landing() {
             <div>
               <p style={{ fontSize: 12.5, color: 'rgba(255,255,255,0.45)', margin: '0 0 8px', fontWeight: 700, letterSpacing: '.06em' }}>STARTING FROM</p>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, marginBottom: 8 }}>
-                <span style={{ fontSize: 58, fontWeight: 900, color: '#fff', letterSpacing: '-2.5px', lineHeight: 1 }}>₦3,000</span>
+                <span style={{ fontSize: 58, fontWeight: 900, color: '#fff', letterSpacing: '-2.5px', lineHeight: 1 }}>₦800</span>
               </div>
               <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.45)', margin: '0 0 36px', lineHeight: 1.6 }}>per successful verification<br /><span style={{ fontSize: 12, color: 'rgba(255,255,255,0.28)' }}>Price varies by country & service</span></p>
               <Link to="/register" className="btn-glow"
@@ -682,7 +686,7 @@ console.`}<span style={{ color: '#2DD4BF' }}>log</span>{`(`}<span style={{ color
       </section>
 
       {/* ══════════════ CTA — always dark green ══════════════ */}
-      <section style={{ background: '#040F08', padding: '90px 24px 100px', borderTop: `1px solid ${secBdr}`, position: 'relative', overflow: 'hidden' }}>
+      <section id="cta" style={{ background: '#040F08', padding: '90px 24px 100px', borderTop: `1px solid ${secBdr}`, position: 'relative', overflow: 'hidden' }}>
         <div style={{ position: 'absolute', top: '50%', left: '50%', pointerEvents: 'none' }}>
           <div className="orb-1" style={{ width: 700, height: 700, borderRadius: '50%', background: 'radial-gradient(circle at center, rgba(22,163,74,0.1) 0%, transparent 68%)', filter: 'blur(50px)', transform: 'translate(-50%,-50%)' }} />
         </div>
@@ -784,33 +788,56 @@ console.`}<span style={{ color: '#2DD4BF' }}>log</span>{`(`}<span style={{ color
 
       {/* ══ Responsive ══ */}
       <style>{`
+        /* ── Tablet (≤ 900px) ── */
         @media (max-width: 900px) {
           #hero-grid         { grid-template-columns: 1fr !important; }
           #phone-col         { display: none !important; }
           #features-grid     { grid-template-columns: 1fr 1fr !important; }
           #steps-grid        { grid-template-columns: 1fr 1fr !important; }
+          #steps-line        { display: none !important; }
           #api-grid          { grid-template-columns: 1fr !important; }
-          #testimonials-grid { grid-template-columns: 1fr !important; }
-          #pricing-inner     { grid-template-columns: 1fr !important; }
-          #footer-grid       { grid-template-columns: 1fr 1fr !important; }
+          #testimonials-grid { grid-template-columns: 1fr 1fr !important; }
+          #pricing-inner     { grid-template-columns: 1fr !important; gap: 32px !important; }
+          #footer-grid       { flex-direction: column !important; align-items: flex-start !important; gap: 24px !important; }
           #metrics-bar       { grid-template-columns: 1fr 1fr !important; gap: 24px !important; }
+          #metrics-bar > div { border-right: none !important; }
         }
-        @media (max-width: 580px) {
-          #features-grid     { grid-template-columns: 1fr !important; }
-          #steps-grid        { grid-template-columns: 1fr !important; }
+
+        /* ── Mobile (≤ 600px) ── */
+        @media (max-width: 600px) {
+          #hero          { padding-top: 70px !important; padding-bottom: 50px !important; }
+          #features      { padding-top: 70px !important; padding-bottom: 70px !important; }
+          #how           { padding-top: 70px !important; padding-bottom: 70px !important; }
+          #countries     { padding-top: 70px !important; padding-bottom: 70px !important; }
+          #testimonials  { padding-top: 70px !important; padding-bottom: 70px !important; }
+          #pricing       { padding-top: 70px !important; padding-bottom: 70px !important; }
+          #api           { padding-top: 70px !important; padding-bottom: 70px !important; }
+          #faq           { padding-top: 70px !important; padding-bottom: 70px !important; }
+          #cta           { padding-top: 60px !important; padding-bottom: 70px !important; }
+          #pricing-inner { padding: 32px 22px !important; }
           #testimonials-grid { grid-template-columns: 1fr !important; }
-          #footer-grid       { grid-template-columns: 1fr !important; }
-          #metrics-bar       { grid-template-columns: 1fr 1fr !important; }
+          #features-grid { grid-template-columns: 1fr !important; }
+          #steps-grid    { grid-template-columns: 1fr !important; }
+          /* Trust bar: horizontal scroll on small screens */
+          #trust-bar-inner { flex-wrap: nowrap !important; justify-content: flex-start !important; overflow-x: auto; padding-bottom: 4px; -webkit-overflow-scrolling: touch; }
+          #trust-bar-inner::-webkit-scrollbar { display: none; }
         }
+
+        /* ── Small mobile (≤ 540px) ── */
         @media (max-width: 540px) {
-          #nav-telegram { display: none !important; }
-          #nav-twitter  { display: none !important; }
-          #nav-sell     { display: none !important; }
-          #hero { padding: 80px 20px 50px !important; }
-          #hero h1 span { letter-spacing: -1px !important; }
+          /* Hide nav clutter — keep only Login button visible */
+          #nav-socials { display: none !important; }
+          #nav-sell    { display: none !important; }
+          /* Hero stat dividers: stack cleanly */
+          #hero-stats  { flex-wrap: wrap !important; gap: 12px !important; padding-top: 20px !important; }
+          #hero-stats > div { flex: 0 0 100% !important; border-right: none !important; padding-left: 0 !important; padding-right: 0 !important; padding-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.07); }
+          #hero-stats > div:last-child { border-bottom: none; padding-bottom: 0; }
         }
+
+        /* ── Very small (≤ 400px) ── */
         @media (max-width: 400px) {
-          #metrics-bar   { grid-template-columns: 1fr !important; }
+          #metrics-bar { grid-template-columns: 1fr 1fr !important; }
+          #footer-grid { gap: 20px !important; }
         }
       `}</style>
     </div>
