@@ -2,14 +2,26 @@
 
 namespace App\Services;
 
+use App\Models\Setting;
+
 class PricingService
 {
     /**
      * Convert a provider USD cost to the TurboStore customer price in kobo (NGN × 100).
      * Applies exchange rate + markup, then rounds to the nearest clean naira amount.
+     * If a per-country/service override exists in DB settings it takes full priority.
      */
-    public function calculateCustomerPrice(float $providerCostUsd): int
+    public function calculateCustomerPrice(float $providerCostUsd, string $country = '', string $service = ''): int
     {
+        // Per-country/service admin override (stored as naira in settings)
+        if ($country !== '' && $service !== '') {
+            $overrideKey = 'price_override.' . strtolower($country) . '.' . strtolower($service);
+            $override    = Setting::get($overrideKey);
+            if ($override !== null && (float) $override > 0) {
+                return (int) round((float) $override * 100);
+            }
+        }
+
         if ($providerCostUsd <= 0) {
             return 0;
         }

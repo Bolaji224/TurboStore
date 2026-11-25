@@ -33,7 +33,10 @@ class CheckOrderStatusJob implements ShouldQueue
             Log::info('[CheckOrderStatusJob] Order expired', ['reference' => $order->reference]);
             $orderService->cancel($order);
             // Override the 'refunded' status with 'expired' so history is accurate
-            $order->fresh()->update(['status' => 'expired']);
+            $order->fresh()->update([
+                'status'         => 'expired',
+                'failure_reason' => 'No OTP was received within the time limit',
+            ]);
             return;
         }
 

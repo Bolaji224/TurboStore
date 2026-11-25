@@ -14,6 +14,7 @@ class MarketplaceService extends Model
         'title',
         'slug',
         'image_url',
+        'extra_images',
         'description',
         'platform',
         'what_you_get',
@@ -35,6 +36,7 @@ class MarketplaceService extends Model
             'is_featured'         => 'boolean',
             'avg_rating'          => 'float',
             'approved_at'         => 'datetime',
+            'extra_images'        => 'array',
         ];
     }
 

@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AccountActivationController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\EmailOrderController;
 use App\Http\Controllers\Marketplace\MarketplaceCatalogueController;
 use App\Http\Controllers\Marketplace\MarketplaceOrderController;
 use App\Http\Controllers\NotificationController;
@@ -111,6 +112,16 @@ Route::prefix('marketplace')->middleware(['auth:api'])->group(function () {
     Route::post('orders/{reference}/confirm',     [MarketplaceOrderController::class, 'confirm']);
     Route::post('orders/{reference}/dispute',     [MarketplaceOrderController::class, 'dispute']);
     Route::post('orders/{reference}/cancel',      [MarketplaceOrderController::class, 'cancel']);
+});
+
+// ── Email OTP orders ──────────────────────────────────────────────────────
+Route::middleware('auth:api')->group(function () {
+    Route::get('email-orders/price',              [EmailOrderController::class, 'price']);
+    Route::get('email-orders',                    [EmailOrderController::class, 'index']);
+    Route::post('email-orders',                   [EmailOrderController::class, 'store'])->middleware('throttle:10,1');
+    Route::get('email-orders/{reference}',        [EmailOrderController::class, 'show']);
+    Route::get('email-orders/{reference}/otp',    [EmailOrderController::class, 'otp']);
+    Route::post('email-orders/{reference}/cancel',[EmailOrderController::class, 'cancel']);
 });
 
 // ── Vendor routes ──────────────────────────────────────────────────────────

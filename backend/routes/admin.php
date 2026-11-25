@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\AdminAuthController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\Admin\AdminLaunchCampaignController;
 use App\Http\Controllers\Admin\AdminMarketplaceController;
@@ -37,9 +38,10 @@ Route::middleware(['auth:api', 'admin'])->group(function () {
     Route::post('users/{user}/wallet/adjust',  [AdminUserController::class, 'adjustWallet']);
 
     // Orders
-    Route::get('orders',              [AdminOrderController::class, 'index']);
-    Route::get('orders/{order}',      [AdminOrderController::class, 'show']);
+    Route::get('orders',                 [AdminOrderController::class, 'index']);
+    Route::get('orders/{order}',         [AdminOrderController::class, 'show']);
     Route::post('orders/{order}/cancel', [AdminOrderController::class, 'cancel']);
+    Route::post('orders/{order}/sync',   [AdminOrderController::class, 'sync']);
 
     // Transactions
     Route::get('transactions', [AdminTransactionController::class, 'index']);
@@ -82,7 +84,15 @@ Route::middleware(['auth:api', 'admin'])->group(function () {
         Route::post('payouts/{id}/reject',             [AdminMarketplaceController::class, 'rejectPayout']);
         Route::get('supplier-reports',                 [AdminMarketplaceController::class, 'supplierReports']);
         Route::get('ledger',                           [AdminMarketplaceController::class, 'ledger']);
+        Route::get('categories',                       [AdminMarketplaceController::class, 'categories']);
+        Route::post('categories',                      [AdminMarketplaceController::class, 'createCategory']);
+        Route::delete('categories/{id}',               [AdminMarketplaceController::class, 'deleteCategory']);
     });
+
+    // Notifications
+    Route::get('notifications',           [NotificationController::class, 'index']);
+    Route::post('notifications/read-all', [NotificationController::class, 'readAll']);
+    Route::post('notifications/{id}/read',[NotificationController::class, 'read']);
 
     // ── Waitlist launch campaign ──────────────────────────────────────────────
     Route::get('launch-campaign',       [AdminLaunchCampaignController::class, 'index']);

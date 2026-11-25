@@ -41,16 +41,18 @@ class VendorServiceController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'category_id'         => 'required|integer|exists:marketplace_categories,id',
+            'category_id'         => 'nullable|integer|exists:marketplace_categories,id',
             'title'               => 'required|string|max:120',
             'description'         => 'required|string|max:3000',
             'platform'            => 'required|string|max:60',
-            'what_you_get'        => 'required|string|max:2000',
+            'what_you_get'        => 'nullable|string|max:2000',
             'requirements'        => 'nullable|string',
             'starting_price_kobo' => 'required|integer|min:100',
             'delivery_days'       => 'required|integer|min:1|max:90',
             'refund_policy'       => 'nullable|string',
             'image'               => 'nullable|image|max:2048',
+            'extra_images'        => 'nullable|array|max:4',
+            'extra_images.*'      => 'image|max:2048',
         ]);
 
         $vendor = $request->user()->vendor;
@@ -62,11 +64,20 @@ class VendorServiceController extends Controller
             $imageUrl = url(Storage::url($path));
         }
 
+        $extraImages = [];
+        if ($request->hasFile('extra_images')) {
+            foreach ($request->file('extra_images') as $file) {
+                $path          = $file->store('services', 'public');
+                $extraImages[] = url(Storage::url($path));
+            }
+        }
+
         $service = MarketplaceService::create(array_merge($validated, [
-            'vendor_id' => $vendor->id,
-            'slug'      => $slug,
-            'status'    => 'draft',
-            'image_url' => $imageUrl,
+            'vendor_id'    => $vendor->id,
+            'slug'         => $slug,
+            'status'       => 'draft',
+            'image_url'    => $imageUrl,
+            'extra_images' => $extraImages ?: null,
         ]));
 
         return response()->json([
@@ -87,16 +98,18 @@ class VendorServiceController extends Controller
             ->firstOrFail();
 
         $validated = $request->validate([
-            'category_id'         => 'sometimes|integer|exists:marketplace_categories,id',
+            'category_id'         => 'nullable|integer|exists:marketplace_categories,id',
             'title'               => 'sometimes|string|max:120',
             'description'         => 'sometimes|string|max:3000',
             'platform'            => 'sometimes|string|max:60',
-            'what_you_get'        => 'sometimes|string|max:2000',
+            'what_you_get'        => 'nullable|string|max:2000',
             'requirements'        => 'nullable|string',
             'starting_price_kobo' => 'sometimes|integer|min:100',
             'delivery_days'       => 'sometimes|integer|min:1|max:90',
             'refund_policy'       => 'nullable|string',
             'image'               => 'nullable|image|max:2048',
+            'extra_images'        => 'nullable|array|max:4',
+            'extra_images.*'      => 'image|max:2048',
         ]);
 
         if ($service->status === 'approved') {
@@ -108,13 +121,26 @@ class VendorServiceController extends Controller
         }
 
         if ($request->hasFile('image')) {
-            // Delete old image if it exists
             if ($service->image_url) {
-                $old = str_replace('/storage/', '', $service->image_url);
+                $old = str_replace(url('/storage/'), 'services/', $service->image_url);
                 Storage::disk('public')->delete($old);
             }
             $path = $request->file('image')->store('services', 'public');
             $validated['image_url'] = url(Storage::url($path));
+        }
+
+        if ($request->hasFile('extra_images')) {
+            // Delete old extra images
+            foreach ((array) ($service->extra_images ?? []) as $old) {
+                $oldPath = str_replace(url('/storage/'), 'services/', $old);
+                Storage::disk('public')->delete($oldPath);
+            }
+            $extras = [];
+            foreach ($request->file('extra_images') as $file) {
+                $path     = $file->store('services', 'public');
+                $extras[] = url(Storage::url($path));
+            }
+            $validated['extra_images'] = $extras;
         }
 
         $service->update($validated);

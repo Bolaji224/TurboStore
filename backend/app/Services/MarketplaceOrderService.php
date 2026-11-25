@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Mail\MarketplaceDeliveredMail;
 use App\Models\MarketplaceDispute;
 use App\Models\MarketplaceOrder;
 use App\Models\MarketplaceOrderEvent;
@@ -11,6 +12,7 @@ use App\Models\User;
 use App\Models\Vendor;
 use App\Models\VendorEarning;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 
 class MarketplaceOrderService
@@ -195,6 +197,21 @@ class MarketplaceOrderService
                 'metadata'             => $proof ? ['proof' => $proof] : null,
             ]);
         });
+
+        // Send credentials email to buyer (outside transaction, failure must not roll back)
+        try {
+            $order->load(['user', 'service', 'vendor']);
+            Mail::to($order->user->email)->send(new MarketplaceDeliveredMail(
+                buyerName:     $order->user->name,
+                serviceName:   $order->service->title,
+                vendorName:    $order->vendor->business_name,
+                reference:     $order->reference,
+                login:         $credentials['login'],
+                password:      $credentials['password'],
+                recoveryEmail: $credentials['recovery_email'] ?? null,
+                notes:         $credentials['notes'] ?? null,
+            ));
+        } catch (\Throwable) {}
     }
 
     /**

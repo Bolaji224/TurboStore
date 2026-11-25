@@ -61,11 +61,23 @@ class AdminOrderController extends Controller
             return response()->json(['message' => 'Order cannot be cancelled in its current state.'], 422);
         }
 
-        $user = $order->user()->first();
-        $this->orderService->cancel($user, $order->reference);
+        $this->orderService->cancel($order);
         $this->auditLog->logFromRequest($request, 'order.cancel', $order);
 
         return response()->json(['message' => 'Order cancelled.', 'order' => $this->format($order->fresh(['user']))]);
+    }
+
+    public function sync(Order $order): JsonResponse
+    {
+        if ($order->isTerminal()) {
+            return response()->json(['message' => 'Order is already in a terminal state.', 'order' => $this->format($order->load('user'))]);
+        }
+
+        $order->load('user');
+        $updated = $this->orderService->syncStatus($order);
+        $updated->load('user');
+
+        return response()->json(['message' => 'Order synced.', 'order' => $this->format($updated)]);
     }
 
     private function format(Order $o): array
@@ -82,6 +94,7 @@ class AdminOrderController extends Controller
             'customer_price' => $o->customer_price,
             'provider_cost'  => $o->provider_cost,
             'status'         => $o->status,
+            'failure_reason' => $o->failure_reason,
             'otp'            => $o->otp,
             'reward_id'      => $o->reward_id,
             'expires_at'     => $o->expires_at,

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\MarketplaceOrder;
 use App\Models\MarketplaceService;
 use App\Services\MarketplaceOrderService;
+use App\Services\NotificationService;
 use Illuminate\Http\Request;
 
 class MarketplaceOrderController extends Controller
@@ -14,7 +15,7 @@ class MarketplaceOrderController extends Controller
      * POST /api/marketplace/orders
      * Place a new marketplace order.
      */
-    public function store(Request $request, MarketplaceOrderService $service)
+    public function store(Request $request, MarketplaceOrderService $service, NotificationService $notifications)
     {
         $validated = $request->validate([
             'service_id'      => 'required|integer|exists:marketplace_services,id',
@@ -33,7 +34,9 @@ class MarketplaceOrderController extends Controller
                 $validated['idempotency_key'] ?? null,
             );
 
-            $order->load(['service', 'vendor.user:id,name', 'events']);
+            $order->load(['service', 'vendor.user:id,name', 'events', 'user:id,name']);
+
+            try { $notifications->marketplaceOrderPlaced($order); } catch (\Throwable) {}
 
             return response()->json([
                 'message' => 'Order placed successfully.',
@@ -178,4 +181,5 @@ class MarketplaceOrderController extends Controller
             return response()->json(['message' => $e->getMessage()], 422);
         }
     }
+
 }

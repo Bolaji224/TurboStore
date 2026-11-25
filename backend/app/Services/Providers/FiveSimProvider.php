@@ -55,9 +55,9 @@ class FiveSimProvider implements SmsProviderInterface
             ->filter(fn($data) => is_array($data))
             ->map(fn($data, $code) => new CountryData(
                 code:   (string) $code,
-                name:   is_array($data['text'] ?? null) ? ucfirst((string) $code) : ($data['text'] ?? ucfirst((string) $code)),
-                iso:    is_array($data['iso'] ?? null) ? ($data['iso'][0] ?? null) : ($data['iso'] ?? null),
-                prefix: isset($data['prefix']) ? '+' . (is_array($data['prefix']) ? implode('/', $data['prefix']) : $data['prefix']) : null,
+                name:   $data['text_en'] ?? $data['text_ru'] ?? ucfirst((string) $code),
+                iso:    is_array($data['iso'] ?? null) ? (array_key_first($data['iso']) ?? null) : ($data['iso'] ?? null),
+                prefix: null,
             ))
             ->sortBy('name')
             ->values()
@@ -76,7 +76,7 @@ class FiveSimProvider implements SmsProviderInterface
                 name:          $this->formatServiceName((string) $service),
                 qty:           (int) ($data['Qty'] ?? 0),
                 providerPrice: (float) ($data['Price'] ?? 0),
-                customerPrice: $this->pricing->calculateCustomerPrice((float) ($data['Price'] ?? 0)),
+                customerPrice: $this->pricing->calculateCustomerPrice((float) ($data['Price'] ?? 0), $country, (string) $service),
             ))
             ->sortBy('name')
             ->values()
@@ -104,7 +104,7 @@ class FiveSimProvider implements SmsProviderInterface
                 service:       $service,
                 qty:           $qty,
                 providerPrice: $price,
-                customerPrice: $this->pricing->calculateCustomerPrice($price),
+                customerPrice: $this->pricing->calculateCustomerPrice($price, $country, $service),
                 available:     $qty > 0,
             );
         } catch (\Throwable) {
@@ -153,6 +153,18 @@ class FiveSimProvider implements SmsProviderInterface
         }
 
         $data = $response->json();
+        $body = $response->body();
+
+        // 5SIM sometimes returns plain-text errors (e.g. "no free phones") with HTTP 200
+        if (!is_array($data) || !isset($data['id'])) {
+            if (str_contains((string) $body, 'no free phones') || str_contains((string) $body, 'no free')) {
+                throw new ProviderOutOfStockException('No numbers available from 5SIM for this service/country', 'fivesim');
+            }
+            if (str_contains((string) $body, 'not enough rating') || str_contains((string) $body, 'rating')) {
+                throw new ProviderPurchaseException('5SIM account rating too low for this country/service', 'fivesim');
+            }
+            throw new ProviderPurchaseException('5SIM purchase failed: ' . (string) $body, 'fivesim');
+        }
 
         return new PurchasedNumberData(
             providerOrderId: (string) $data['id'],

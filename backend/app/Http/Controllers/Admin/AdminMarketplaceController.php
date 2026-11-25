@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\MarketplaceCategory;
 use App\Models\MarketplaceDispute;
 use App\Models\MarketplaceOrder;
 use App\Models\MarketplaceService;
@@ -14,6 +15,7 @@ use App\Services\MarketplaceOrderService;
 use App\Services\PayoutService;
 use App\Services\VendorService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 
 class AdminMarketplaceController extends Controller
 {
@@ -501,5 +503,43 @@ class AdminMarketplaceController extends Controller
                 'pending_payouts_naira'  => round($pendingPayoutsKobo / 100, 2),
             ],
         ]);
+    }
+
+    // =========================================================================
+    // Categories
+    // =========================================================================
+
+    public function categories()
+    {
+        return response()->json([
+            'data' => MarketplaceCategory::orderBy('sort_order')->orderBy('name')->get(),
+        ]);
+    }
+
+    public function createCategory(Request $request)
+    {
+        $request->validate([
+            'name'     => 'required|string|max:100',
+            'platform' => 'required|in:facebook,instagram,twitter,tiktok,youtube,general',
+        ]);
+
+        $category = MarketplaceCategory::create([
+            'name'       => $request->name,
+            'slug'       => Str::slug($request->name) . '-' . Str::random(4),
+            'platform'   => $request->platform,
+            'icon'       => $request->icon ?? '',
+            'is_active'  => true,
+            'sort_order' => MarketplaceCategory::max('sort_order') + 1,
+        ]);
+
+        return response()->json(['message' => 'Category created.', 'data' => $category], 201);
+    }
+
+    public function deleteCategory(int $id)
+    {
+        $category = MarketplaceCategory::findOrFail($id);
+        $category->delete();
+
+        return response()->json(['message' => 'Category deleted.']);
     }
 }

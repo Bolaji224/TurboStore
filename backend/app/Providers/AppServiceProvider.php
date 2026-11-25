@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Models\Setting;
 use App\Services\PricingService;
 use App\Services\Providers\FiveSimProvider;
 use App\Services\Providers\GrizzlyProvider;
@@ -42,5 +43,33 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Schema::defaultStringLength(191);
+
+        // Override mail and Paystack config from DB settings so admin can change
+        // them without touching .env or redeploying.
+        try {
+            $mailHost = Setting::get('mail_host');
+            if ($mailHost) {
+                config([
+                    'mail.default'                    => 'smtp',
+                    'mail.mailers.smtp.host'          => $mailHost,
+                    'mail.mailers.smtp.port'          => (int) Setting::get('mail_port', 587),
+                    'mail.mailers.smtp.username'      => Setting::get('mail_username', ''),
+                    'mail.mailers.smtp.password'      => Setting::get('mail_password', ''),
+                    'mail.mailers.smtp.encryption'    => Setting::get('mail_encryption', 'tls'),
+                    'mail.from.address'               => Setting::get('mail_from_address', ''),
+                    'mail.from.name'                  => Setting::get('mail_from_name', config('app.name')),
+                ]);
+            }
+
+            $paystackSecret = Setting::get('paystack_secret_key');
+            if ($paystackSecret) {
+                config([
+                    'services.paystack.secret_key' => $paystackSecret,
+                    'services.paystack.public_key' => Setting::get('paystack_public_key', ''),
+                ]);
+            }
+        } catch (\Exception $e) {
+            // DB not ready (e.g., during migrations) — fall back to .env silently
+        }
     }
 }
